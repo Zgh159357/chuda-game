@@ -1,0 +1,7 @@
+node_modules/
+dist/
+launcher.log
+*.local
+.DS_Store
+.vscode/
+.idea/
