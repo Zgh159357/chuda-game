@@ -15,9 +15,9 @@ import { makeCadres } from '../config/world';
 // v9（治理护盾）：新增村级治理护盾，v8 存档自动迁移。
 // ============================================================
 
-const STORAGE_KEY = 'chuda.save.v10';
-const LEGACY_KEYS = ['chuda.save.v9', 'chuda.save.v8', 'chuda.save.v7', 'chuda.save.v6', 'chuda.save.v5', 'chuda.save.v4', 'chuda.save.v3', 'chuda.save.v2', 'chuda.save.v1'];
-export const SAVE_VERSION = 10;
+const STORAGE_KEY = 'chuda.save.v11';
+const LEGACY_KEYS = ['chuda.save.v10', 'chuda.save.v9', 'chuda.save.v8', 'chuda.save.v7', 'chuda.save.v6', 'chuda.save.v5', 'chuda.save.v4', 'chuda.save.v3', 'chuda.save.v2', 'chuda.save.v1'];
+export const SAVE_VERSION = 11;
 
 export function serialize(state: GameState): string {
   return JSON.stringify(state);
@@ -119,16 +119,25 @@ function migrateV8(data: GameState): void {
 
 /** 各村的默认环境特征（§12 迁移与容错共用） */
 const DEFAULT_ENV_BY_VILLAGE: Record<string, EnvironmentTraits> = {
-  v_yunxi: { terrain: '平原', disasterRisk: 30, clanPower: 40, traditionalIdeology: 45 },
-  v_wuling: { terrain: '深山', disasterRisk: 45, clanPower: 55, traditionalIdeology: 65 },
-  v_qingshi: { terrain: '石漠化', disasterRisk: 55, clanPower: 35, traditionalIdeology: 50 },
+  v_yunxi: { terrain: '平原', disasterRisk: 30, clanPower: 40, traditionalIdeology: 45, resources: ['fertile_soil', 'rich_selenium'] },
+  v_wuling: { terrain: '深山', disasterRisk: 45, clanPower: 55, traditionalIdeology: 65, resources: ['non_heritage', 'idle_houses'] },
+  v_qingshi: { terrain: '石漠化', disasterRisk: 55, clanPower: 35, traditionalIdeology: 50, resources: ['sunlight'] },
 };
 
 /** v9 → v10：补村级环境特征（environment，§12） */
 function migrateV9(data: GameState): void {
   for (const v of data.villages) {
     if (!v.environment) {
-      v.environment = DEFAULT_ENV_BY_VILLAGE[v.id] ?? { terrain: '平原', disasterRisk: 30, clanPower: 30, traditionalIdeology: 30 };
+      v.environment = DEFAULT_ENV_BY_VILLAGE[v.id] ?? { terrain: '平原', disasterRisk: 30, clanPower: 30, traditionalIdeology: 30, resources: [] };
+    }
+  }
+}
+
+/** v10 → v11：补环境隐性资源标签（resources，§14） */
+function migrateV10(data: GameState): void {
+  for (const v of data.villages) {
+    if (!Array.isArray(v.environment.resources)) {
+      v.environment.resources = DEFAULT_ENV_BY_VILLAGE[v.id]?.resources ?? [];
     }
   }
 }
@@ -169,6 +178,10 @@ export function deserialize(json: string): GameState {
   }
   if (data.version === 9) {
     migrateV9(data);
+    data.version = 10;
+  }
+  if (data.version === 10) {
+    migrateV10(data);
     data.version = SAVE_VERSION;
   }
   if (data.version !== SAVE_VERSION) {

@@ -28,7 +28,7 @@ export function makeVillages(): VillageState[] {
   return [
     {
       id: 'v_yunxi', name: '云溪村',
-      environment: { terrain: '平原', disasterRisk: 30, clanPower: 40, traditionalIdeology: 45 },
+      environment: { terrain: '平原', disasterRisk: 30, clanPower: 40, traditionalIdeology: 45, resources: ['fertile_soil', 'rich_selenium'] },
       infoAccuracy: 0, externalEmbed: 20, internalGovernance: 25, industryBase: 15,
       industryChannel: 10, industryChain: 10, subsidyDependence: 30, returnRisk: 55,
       collectiveEconomy: 10, coopType: null, dualBindStability: 0, canHoldIndex: 0,
@@ -38,7 +38,7 @@ export function makeVillages(): VillageState[] {
     },
     {
       id: 'v_wuling', name: '雾岭村',
-      environment: { terrain: '深山', disasterRisk: 45, clanPower: 55, traditionalIdeology: 65 },
+      environment: { terrain: '深山', disasterRisk: 45, clanPower: 55, traditionalIdeology: 65, resources: ['non_heritage', 'idle_houses'] },
       infoAccuracy: 0, externalEmbed: 15, internalGovernance: 20, industryBase: 10,
       industryChannel: 8, industryChain: 8, subsidyDependence: 25, returnRisk: 65,
       collectiveEconomy: 5, coopType: null, dualBindStability: 0, canHoldIndex: 0,
@@ -48,7 +48,7 @@ export function makeVillages(): VillageState[] {
     },
     {
       id: 'v_qingshi', name: '青石村',
-      environment: { terrain: '石漠化', disasterRisk: 55, clanPower: 35, traditionalIdeology: 50 },
+      environment: { terrain: '石漠化', disasterRisk: 55, clanPower: 35, traditionalIdeology: 50, resources: ['sunlight'] },
       infoAccuracy: 0, externalEmbed: 30, internalGovernance: 35, industryBase: 40,
       industryChannel: 25, industryChain: 30, subsidyDependence: 45, returnRisk: 40,
       collectiveEconomy: 20, coopType: null, dualBindStability: 0, canHoldIndex: 0,

@@ -11,6 +11,7 @@ export const DEFAULT_ENVIRONMENT: EnvironmentTraits = {
   disasterRisk: 30,
   clanPower: 30,
   traditionalIdeology: 30,
+  resources: [],
 };
 
 /** 玩家初始身份映射：现有锚点 → 主控提示词的三类身份 */

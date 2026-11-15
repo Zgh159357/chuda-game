@@ -75,6 +75,7 @@ export interface EnvironmentTraits {
   disasterRisk: number; // 灾害风险 0-100
   clanPower: number; // 宗族势力 0-100
   traditionalIdeology: number; // 传统观念阻力 0-100
+  resources: ResourceTag[]; // §14 隐性资源标签（富硒土壤/非遗文化/充足日照…）
 }
 
 /** 建筑/项目类型（版画沙盘渲染与产出修正用） */
@@ -142,6 +143,36 @@ export interface GameEventConfig {
 export interface RolledEvent {
   config: GameEventConfig;
   villageId?: string;
+}
+
+// ===== §14 要素标签化与涌现式产业融合（主控提示词：产业融合引擎） =====
+/** 地块的隐性资源标签 */
+export type ResourceTag = 'fertile_soil' | 'rich_selenium' | 'sunlight' | 'non_heritage' | 'idle_houses';
+
+/** 产业建筑的产出标签 */
+export type IndustryTag = 'primary_agri' | 'processing' | 'service' | 'logistics' | 'energy';
+
+/** 产业节点（建筑蓝图：玩家放置/项目派生的产业设施） */
+export interface IndustryNode {
+  id: string;
+  name: string; // 如「富硒水稻」「加工厂」「康养民宿」
+  tags: IndustryTag[]; // 一个建筑可以有多个标签
+  baseOutput: number;
+  cost: number;
+}
+
+/**
+ * 融合配方（化合反应）：资源标签 + 产业标签 同时满足 → 质变
+ */
+export interface SynergyRecipe {
+  id: string;
+  name: string; // 如「农旅融合」「光伏农业」
+  requiredResourceTags: ResourceTag[]; // 地块必须有的隐性资源
+  requiredIndustryTags: IndustryTag[]; // 周边必须建成的产业标签
+  requiredTerrain?: Terrain; // 可选：限定地形（如「高山特色药业」要求深山）
+  outputMultiplier: number; // 产出倍率
+  specialEffectDesc: string; // 特殊效果描述
+  unlockVillageTitle: string; // 解锁的村庄头衔
 }
 
 // ===== 干部特质（Cadre Traits） =====

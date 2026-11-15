@@ -32,7 +32,7 @@ export function createInitialState(seed: number, anchor: PlayerAnchor): GameStat
   }
 
   return {
-    version: 10,
+    version: 11,
     seed,
     status: 'running',
     anchor,
