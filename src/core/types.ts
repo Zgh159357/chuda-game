@@ -358,6 +358,7 @@ export interface VillageState {
   households: HouseholdGroup[];
   projects: string[]; // 项目 id
   industryOutputMul: number; // §10 产业产出乘数（传帮带当回合 =0.7，结算后复位 1）
+  governanceShield: number; // §11 治理护盾：按驻村干部数每回合生成，负面事件优先扣护盾
 }
 
 // ===== 户群 =====
@@ -609,7 +610,8 @@ export type GameEvent =
   | IndustryDisasterEvent
   | CadreSlackEvent
   | FloorDefenseEvent
-  | ResilienceAbsorbedEvent;
+  | ResilienceAbsorbedEvent
+  | GovernanceShieldAbsorbedEvent;
 
 export interface CohesionRiotEvent {
   type: 'cohesionRiot';
@@ -703,6 +705,12 @@ export interface ResilienceAbsorbedEvent {
   round: Round;
   amount: number;
   textId: string;
+}
+export interface GovernanceShieldAbsorbedEvent {
+  type: 'governanceShieldAbsorbed'; // §11 村治理护盾吸收负面事件冲击
+  round: Round;
+  villageId: string;
+  amount: number;
 }
 
 // ===== 大考 / 失败 / 结局 =====
@@ -1103,5 +1111,10 @@ export interface BalanceConfig {
     visitBonus: number; // 本回合有入户走访/摸排 → 额外恢复 5
     floorDefenseCost: number; // 底线防御每次紧急干预扣财政 200
     floorDefenseThreshold: number; // 内生治理低于此值触发底线防御 20
+  };
+  governanceShield: {
+    // §11 治理护盾（村级）：按驻村干部数每回合生成，负面事件优先扣盾
+    perCadrePerRound: number; // 每名驻村干部每回合生成的护盾值
+    max: number; // 单村护盾上限
   };
 }

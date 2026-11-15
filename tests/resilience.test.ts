@@ -63,16 +63,15 @@ describe('§10 组织韧性系统', () => {
     expect(resilienceRatio(s0)).toBe(0);
   });
 
-  it('传帮带两分支：未指派扣内生治理（韧性归零时），指派+1 且产业产出 ×0.7', () => {
+  it('传帮带两分支：未指派每回合仅扣 1 点（§11 削弱），指派 +1 且产业产出 ×0.7', () => {
     const s0 = createInitialState(20261114, 'returningStudent');
-    s0.county.organizationalResilience = 0; // 韧性归零 → 伤害直接落到内生治理
     const v = s0.villages[0];
     v.dispatchedUnitId = 'u_agri';
     v.internalGovernance = 30;
     const ctx = createTurnCtx(s0, seedRng(1), 1);
-    // 未指派传帮带
+    // 未指派传帮带：挤出效应每回合仅 −1
     settleEmbedding(s0, v.id, [], ctx);
-    expect(v.internalGovernance).toBe(28); // −2
+    expect(v.internalGovernance).toBe(29); // §11：−1（原 −2）
     expect(v.industryOutputMul).toBe(1);
     // 指派传帮带
     const ctx2 = createTurnCtx(s0, seedRng(1), 1);
@@ -114,9 +113,9 @@ describe('§10 组织韧性系统', () => {
     s0.heroes.push({ heroId: 'hero_oldsecretary', villageId: 'v_yunxi', recruitRound: 0 });
     s0.county.organizationalResilience = 20;
     const out = playRound(s0, idleActions());
-    // 韧性上限 50+30=80；恢复 +5，但开局组织成本比率 12>2 触发成本超支伤害 −2（韧性吸收）
+    // 韧性上限 50+30=80；恢复 +5；新公式分母 50 下开局比率 <1，不再触发成本超支伤害
     expect(out.state.county.maxResilience).toBe(80);
-    expect(out.state.county.organizationalResilience).toBe(23);
+    expect(out.state.county.organizationalResilience).toBe(25);
     // 老支书毒点：个人精力上限 6−1=5
     expect(out.state.county.playerStamina).toBe(5);
   });
@@ -135,15 +134,17 @@ describe('§10 组织韧性系统', () => {
     expect(out.events.filter((e) => e.type === 'resilienceAbsorbed').length).toBeLessThanOrEqual(1);
   });
 
-  it('存档 v8 往返：韧性字段完整保留', () => {
+  it('存档 v9 往返：韧性字段与治理护盾完整保留', () => {
     const s0 = createInitialState(20261114, 'returningStudent');
     s0.county.organizationalResilience = 33;
+    s0.villages[0].governanceShield = 6;
     const out = playRound(s0, idleActions());
     const round2 = out.state;
     const restored = deserialize(serialize(round2));
-    expect(restored.version).toBe(8);
+    expect(restored.version).toBe(9);
     expect(restored.county.organizationalResilience).toBe(round2.county.organizationalResilience);
     expect(restored.county.maxResilience).toBe(round2.county.maxResilience);
     expect(restored.villages.every((v) => typeof v.industryOutputMul === 'number')).toBe(true);
+    expect(restored.villages.every((v) => typeof v.governanceShield === 'number')).toBe(true);
   });
 });

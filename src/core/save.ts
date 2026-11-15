@@ -12,11 +12,12 @@ import { makeCadres } from '../config/world';
 // v6（核心驱动力）：新增机制树/超级工程/人才，v5 存档自动迁移。
 // v7（因果律扩展）：新增事件历史/连击状态/人才两难队列，v6 存档自动迁移。
 // v8（组织韧性）：新增组织韧性池/传帮带产出系数，v7 存档自动迁移。
+// v9（治理护盾）：新增村级治理护盾，v8 存档自动迁移。
 // ============================================================
 
-const STORAGE_KEY = 'chuda.save.v8';
-const LEGACY_KEYS = ['chuda.save.v7', 'chuda.save.v6', 'chuda.save.v5', 'chuda.save.v4', 'chuda.save.v3', 'chuda.save.v2', 'chuda.save.v1'];
-export const SAVE_VERSION = 8;
+const STORAGE_KEY = 'chuda.save.v9';
+const LEGACY_KEYS = ['chuda.save.v8', 'chuda.save.v7', 'chuda.save.v6', 'chuda.save.v5', 'chuda.save.v4', 'chuda.save.v3', 'chuda.save.v2', 'chuda.save.v1'];
+export const SAVE_VERSION = 9;
 
 export function serialize(state: GameState): string {
   return JSON.stringify(state);
@@ -109,6 +110,13 @@ function migrateV7(data: GameState): void {
   }
 }
 
+/** v8 → v9：补村级治理护盾（governanceShield，§11） */
+function migrateV8(data: GameState): void {
+  for (const v of data.villages) {
+    if (typeof v.governanceShield !== 'number') v.governanceShield = 0;
+  }
+}
+
 export function deserialize(json: string): GameState {
   const data = JSON.parse(json) as GameState;
   if (data.version === 1) {
@@ -137,6 +145,10 @@ export function deserialize(json: string): GameState {
   }
   if (data.version === 7) {
     migrateV7(data);
+    data.version = 8;
+  }
+  if (data.version === 8) {
+    migrateV8(data);
     data.version = SAVE_VERSION;
   }
   if (data.version !== SAVE_VERSION) {

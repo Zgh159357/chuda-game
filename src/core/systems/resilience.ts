@@ -13,6 +13,7 @@ import { config } from '../../config';
 import type { TurnCtx } from './context';
 import { techSum } from './techTree';
 import { heroSum, heroSumAll } from './heroes';
+import { calculateGovernanceDecay } from './governance';
 
 /** 组织韧性比例（0–1，UI 韧性条/护盾强度用；核心层纯函数） */
 export function resilienceRatio(state: GameState): number {
@@ -46,9 +47,9 @@ export function settleResilience(state: GameState, ctx: TurnCtx, hadVisit: boole
 }
 
 /**
- * 挤出效应新公式（替换原「外部嵌入挤出内生」段）：
- * - 无驻村队：不动（原 externalEmbed −1 / 内生 +0.8 由 organization.ts 保留）。
- * - 有驻村队且未指派传帮带：applyOrgDamage(2)，real 部分扣该村内生治理。
+ * 挤出效应（§11 重构后）：统一走 calculateGovernanceDecay。
+ * - 有驻村队且未指派传帮带：内生治理每回合仅扣 1 点（老支书减半），
+ *   不再走县级韧性缓冲（护盾只针对负面事件，挤出是结构性的）。
  * - 有驻村队且指派传帮带：内生治理 +1，但该村本回合产业产出 ×0.7。
  */
 export function settleEmbedding(
@@ -65,11 +66,8 @@ export function settleEmbedding(
     v.industryOutputMul = 0.7; // 传帮带占人：当回合产业产出 −30%
     ctx.pushFeedback('mf_scheduler', 'mentorship_on_text');
   } else {
-    // 组织度下降减速（老支书等 orgSlow 人才派驻本村）
-    const slow = Math.min(1, heroSum(state, villageId, 'orgSlow'));
-    const amount = Math.round(2 * (1 - slow));
-    const { real } = applyOrgDamage(state, amount, ctx);
-    v.internalGovernance = Math.max(0, v.internalGovernance - real);
+    const { extrusion } = calculateGovernanceDecay(state, v, false);
+    v.internalGovernance = Math.max(0, Math.round((v.internalGovernance - extrusion) * 10) / 10);
   }
 }
 

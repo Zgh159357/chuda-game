@@ -67,4 +67,8 @@ export const balance: BalanceConfig = {
     floorDefenseCost: 200, // 底线防御每次紧急干预扣财政
     floorDefenseThreshold: 20, // 内生治理低于此值触发底线防御
   },
+  governanceShield: {
+    perCadrePerRound: 2, // 每名驻村干部每回合生成 2 点护盾
+    max: 8, // 单村护盾上限
+  },
 };

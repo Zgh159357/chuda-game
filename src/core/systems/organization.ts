@@ -5,10 +5,12 @@ import { orgDensityCurve } from '../state/phaseMachine';
 import { skillSum } from '../skills';
 import { wonderSum } from './wonders';
 import { settleEmbedding, applyOrgDamage } from './resilience';
+import { regenerateShield } from './governance';
 
 // ============================================================
 // 系统：组织（政治责任链 / 驻村四捆绑 / 组织密度 / 接得住指数 / 组织成本）
 // §10：驻村挤出改为「传帮带二选一」；成本超支先扣组织韧性。
+// §11：挤出仅 −1/回合；村级治理护盾按驻村干部数生成；成本比率分母平滑。
 // ============================================================
 
 export function settleOrganization(state: GameState, actions: RoundActions, ctx: TurnCtx): void {
@@ -25,6 +27,7 @@ export function settleOrganization(state: GameState, actions: RoundActions, ctx:
   for (const v of state.villages) {
     const govBefore = v.internalGovernance;
     v.industryOutputMul = 1; // 每回合复位（传帮带村由 settleEmbedding 置 0.7）
+    regenerateShield(state, v); // §11 治理护盾：按驻村干部数每回合生成
     if (v.dispatchedUnitId) {
       const u = state.units.find((x) => x.id === v.dispatchedUnitId);
       if (u) {
@@ -74,9 +77,9 @@ export function settleOrganization(state: GameState, actions: RoundActions, ctx:
     }
   }
 
-  // ----- 组织成本比率 -----
+  // ----- 组织成本比率（§11 平滑：分母下限 50，避免前期产出为 0 时比率无限大） -----
   const output = Math.max(
-    1,
+    50,
     ctx.ledgerDelta.filter((e) => e.kind === 'achievement').reduce((s, e) => s + Math.max(0, e.value), 0)
   );
   const tableCut = Math.min(1, skillSum(state, 'tableCut')); // 组织建设线：台账减负
@@ -91,7 +94,12 @@ export function settleOrganization(state: GameState, actions: RoundActions, ctx:
     c.orgCostRatio = Math.max(0, Math.round((c.orgCostRatio - 0.1) * 100) / 100);
   }
   if (c.orgCostRatio > 2) {
-    ctx.pushLedger('org', 'orgCostHeavy', -Math.round(c.orgCostRatio * 2), '组织成本比率过高');
+    // §11 惩罚上限：组织成本过高导致的政资/信任单回合扣除 ≤20 点
+    const pcHit = Math.min(20, Math.round((c.orgCostRatio - 2) * 3));
+    const trustHit = Math.min(20, Math.round((c.orgCostRatio - 2) * 2));
+    c.politicalCapital = Math.max(0, c.politicalCapital - pcHit);
+    c.trust = Math.max(0, c.trust - trustHit);
+    ctx.pushLedger('org', 'orgCostHeavy', -Math.min(20, Math.round(c.orgCostRatio * 2)), '组织成本比率过高');
     // §10 成本超支：组织度伤害先扣组织韧性，韧性归零才真扣组织密度
     const { real } = applyOrgDamage(state, 2, ctx);
     c.orgDensity = Math.max(0, c.orgDensity - real);

@@ -36,6 +36,7 @@ const EVENT_TAGS: Record<string, { text: string; cls: string }> = {
   cadreSlack: { text: '干部怠工', cls: 'warn' },
   floorDefense: { text: '底线防御', cls: 'bad' },
   resilienceAbsorbed: { text: '韧性缓冲', cls: 'warn' },
+  governanceShieldAbsorbed: { text: '治理护盾', cls: 'good' },
 };
 
 function eventText(outcome: RoundOutcome, e: RoundOutcome['events'][number]): string {
@@ -141,6 +142,10 @@ function eventText(outcome: RoundOutcome, e: RoundOutcome['events'][number]): st
     }
     case 'resilienceAbsorbed':
       return `组织韧性抵挡了 ${e.amount} 点治理力损耗。`;
+    case 'governanceShieldAbsorbed': {
+      const v = outcome.state.villages.find((x) => x.id === e.villageId);
+      return `${v?.name ?? e.villageId} 的治理护盾吸收了 ${e.amount} 点冲击，村两委没有伤到。`;
+    }
     default:
       return '';
   }

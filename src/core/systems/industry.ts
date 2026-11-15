@@ -4,6 +4,7 @@ import { skillSum } from '../skills';
 import { techSum, techPenaltySum } from './techTree';
 import { wonderSum } from './wonders';
 import { heroSum, flawSum } from './heroes';
+import { shieldDamage } from './governance';
 import type { TurnCtx } from './context';
 
 // ============================================================
@@ -38,6 +39,13 @@ export function settleIndustry(state: GameState, ctx: TurnCtx): void {
     ctx.pushEvent({ type: 'industryDisaster', round: ctx.round, textId: 'industry_disaster_text' });
     ctx.pushLedger('cost', 'industry_disaster', -12, '全产业链遇灾，项目全盘停滞');
     ctx.addStars(-15);
+    // §11 灾情冲击优先扣村治理护盾，穿透部分才扣内生治理
+    for (const v of state.villages) {
+      if (v.projects.some((pid) => state.projects.find((p) => p.id === pid)?.status === 'stalled')) {
+        const real = shieldDamage(state, v.id, 2, ctx);
+        v.internalGovernance = Math.max(0, v.internalGovernance - real);
+      }
+    }
   }
 
   for (const v of state.villages) {
@@ -124,6 +132,9 @@ export function settleIndustry(state: GameState, ctx: TurnCtx): void {
         ctx.pushEvent({ type: 'projectFailure', round: ctx.round, projectId: p.id });
         ctx.pushLedger('cost', `projectStall_${p.id}`, -10, `${p.name} 烂尾`);
         ctx.addStars(-15);
+        // §11 项目烂尾冲击优先扣村治理护盾
+        const real = shieldDamage(state, v.id, 1, ctx);
+        v.internalGovernance = Math.max(0, v.internalGovernance - real);
       }
     }
 

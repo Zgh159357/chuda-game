@@ -69,6 +69,9 @@ export function VillageRoster({ state, surveyVillages, onToggleSurvey, villageId
                 <span>产业基础：{valueOrMask(v, v.industryBase)}</span>
                 <span>补贴依赖：{valueOrMask(v, v.subsidyDependence)}%</span>
                 <span>接得住：{valueOrMask(v, v.canHoldIndex)}</span>
+                <span title="按驻村干部数每回合生成；项目烂尾、灾情先扣护盾">
+                  治理护盾：{Math.round(v.governanceShield)}
+                </span>
               </div>
               <div style={{ marginTop: 6, fontSize: 12 }}>
                 <span style={{ color: 'rgba(58,46,36,0.7)' }}>
