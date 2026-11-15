@@ -171,9 +171,42 @@ export interface SynergyRecipe {
   requiredResourceTags: ResourceTag[]; // 地块必须有的隐性资源
   requiredIndustryTags: IndustryTag[]; // 周边必须建成的产业标签
   requiredTerrain?: Terrain; // 可选：限定地形（如「高山特色药业」要求深山）
-  outputMultiplier: number; // 产出倍率
+  forbiddenIndustryTags?: IndustryTag[]; // §15 反面配方：有这些标签反而成不了（如民宿没路）
+  requiredTitles?: string[]; // §15 进化前置：必须已解锁的配方头衔（tier 2/3）
+  catalystId?: string; // §15 商机限时：仅当本回合商机匹配时才能炼出
+  requiredHeroId?: string; // §15 人才联动：需要指定人才派驻本村
+  outputMultiplier: number; // 产出倍率（反面配方 <1）
   specialEffectDesc: string; // 特殊效果描述
   unlockVillageTitle: string; // 解锁的村庄头衔
+  tier?: 1 | 2 | 3; // §15 流派阶位（进化链）
+  anti?: boolean; // §15 反面配方（烂点子成真了）
+  effects?: SynergyEffect[]; // §15 持有头衔时每回合的持续效果
+}
+
+/** §15 流派持续效果类型（持有头衔期间每回合结算） */
+export type SynergyEffectKind = 'trust' | 'ecology' | 'returnRisk' | 'subsidyDependence' | 'participation';
+
+export interface SynergyEffect {
+  kind: SynergyEffectKind;
+  value: number; // 正=增益、负=代价（反面配方写负值）
+  desc: string;
+}
+
+/** §15 本回合商机（催化剂）：让特定配方限时解锁 */
+export interface SynergyCatalyst {
+  id: string;
+  name: string; // 如「春茶季」「雨季」「直播节」
+  matchTag: ResourceTag | IndustryTag; // 撬动的要素标签
+  desc: string;
+  weight: number; // 轮盘权重（无商机=权重外的空档）
+}
+
+/** §15 玩家自建产业设施（沙盘自由组合的落点） */
+export interface BuiltNode {
+  id: string; // 实例 id（nodeId_villageId_round）
+  nodeId: string; // 蓝图 id（industryNodes）
+  villageId: string;
+  builtRound: number;
 }
 
 // ===== 干部特质（Cadre Traits） =====
@@ -371,6 +404,7 @@ export interface DraftState {
   heroAssign: { heroId: string; villageId: string }[]; // 人才：本回合派驻调整
   recruitChoices: { heroId: string; accepted: boolean }[]; // 人才两难：本回合抉择（v7 起）
   mentorship: string[]; // §10：本回合指派「传帮带」的村 id
+  buildNodes: { nodeId: string; villageId: string }[]; // §15：本回合自建产业设施
 }
 
 // ===== 干部（主体性实体：精力 / 士气 / 疲劳） =====
@@ -921,6 +955,7 @@ export interface RoundActions {
   heroAssign?: { heroId: string; villageId: string }[]; // 人才派驻调整
   recruitChoices?: { heroId: string; accepted: boolean }[]; // 人才两难抉择（v7 起）
   mentorship?: string[]; // §10：本回合指派「传帮带」的村 id
+  buildNodes?: { nodeId: string; villageId: string }[]; // §15：本回合自建产业设施
   skip?: boolean; // 跳过部分操作（空转回合）
 }
 
@@ -996,6 +1031,7 @@ export interface GameState {
   };
   pendingRecruits: { heroId: string; question: string }[]; // 待抉择的人才两难（v7 起）
   declinedRecruits: string[]; // 已拒绝的人才（declineCloses 后不再触发）
+  builtNodes: BuiltNode[]; // §15 玩家自建产业设施（沙盘自由组合）
 }
 
 export interface RoundRecord {

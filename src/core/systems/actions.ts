@@ -4,6 +4,7 @@ import type { TurnCtx } from './context';
 import { applyCardEffects } from './cardEffects';
 import { deriveRoadSet, logisticsCoveredAt } from '../sandbox/logistics';
 import { resolveNegotiation } from '../sandbox/negotiation';
+import { industryNodes } from '../../config/industry';
 
 // ============================================================
 // 行动解析：把 UI 产出的 RoundActions 变成状态变化
@@ -449,6 +450,30 @@ export function resolveActions(state: GameState, actions: RoundActions, ctx: Tur
     ctx.pushFeedback('mf_skill_unlock', 'mf_skill_unlock_text');
     ctx.addStars(10);
     ctx.pushLedger('transition', `skill_${skillId}`, 6, `技能解锁：${spec.name}`);
+  }
+
+  // ----- §15 自建产业设施：把蓝图落进村庄沙盘（自由组合的落点） -----
+  for (const bn of actions.buildNodes ?? []) {
+    const spec = industryNodes.find((n) => n.id === bn.nodeId);
+    if (!spec) continue;
+    const v = state.villages.find((x) => x.id === bn.villageId);
+    if (!v) continue;
+    if (!v.surveyed) continue; // 迷雾未揭，图纸放不进去
+    if (c.fiscalFund < spec.cost) continue; // 财政不足，不动工
+    const dup = (state.builtNodes ?? []).some(
+      (b) => b.nodeId === bn.nodeId && b.villageId === bn.villageId
+    );
+    if (dup) continue; // 同村同蓝图只建一座
+    c.fiscalFund -= spec.cost;
+    state.builtNodes.push({
+      id: `${bn.nodeId}_${bn.villageId}_${ctx.round}`,
+      nodeId: bn.nodeId,
+      villageId: bn.villageId,
+      builtRound: ctx.round,
+    });
+    ctx.pushLedger('achievement', 'builtNode', 2, `落成设施：${spec.name}`);
+    ctx.addStars(3);
+    ctx.noteCombo('solid');
   }
 }
 

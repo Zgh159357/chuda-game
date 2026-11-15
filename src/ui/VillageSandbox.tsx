@@ -3,10 +3,18 @@
 // 易地搬迁 —— 政策卡指派到本村后在这里落地。
 // ============================================================
 import React from 'react';
-import type { CoopType, GameState, MeasureId, PovertyTag } from '../core/types';
+import type { CoopType, GameState, IndustryTag, MeasureId, PovertyTag } from '../core/types';
 import { config } from '../config';
-import { synergyRecipes } from '../config/industry';
+import { synergyRecipes, industryNodes } from '../config/industry';
 import { useGame } from './store';
+
+const TAG_NAMES_BUILT: Record<IndustryTag, string> = {
+  primary_agri: '一产',
+  processing: '加工',
+  service: '服务',
+  logistics: '物流',
+  energy: '能源',
+};
 
 const MEASURE_NAMES: Record<MeasureId, string> = {
   industry: '产业带动',
@@ -38,6 +46,7 @@ export function VillageSandbox({ villageId }: { villageId: string }) {
   const updateDraft = useGame((s) => s.updateDraft);
   const openNegotiation = useGame((s) => s.openNegotiation);
   const toggleMentorship = useGame((s) => s.toggleMentorship);
+  const toggleBuildNode = useGame((s) => s.toggleBuildNode);
   if (!state) return null;
   const village = state.villages.find((v) => v.id === villageId);
   if (!village) return null;
@@ -85,7 +94,11 @@ export function VillageSandbox({ villageId }: { villageId: string }) {
             {village.synergyTitles.map((rid) => {
               const recipe = synergyRecipes.find((r) => r.id === rid);
               return recipe ? (
-                <span key={rid} className="synergy-stamp" title={recipe.specialEffectDesc}>
+                <span
+                  key={rid}
+                  className={`synergy-stamp${recipe.anti ? ' anti' : ''}`}
+                  title={recipe.specialEffectDesc}
+                >
                   {recipe.unlockVillageTitle}
                 </span>
               ) : null;
@@ -145,6 +158,34 @@ export function VillageSandbox({ villageId }: { villageId: string }) {
             </label>
           </div>
         )}
+
+        {/* §15 自建产业设施（自由组合的落点） */}
+        <div className="sandbox-block">
+          <h4>自建产业设施（产业融合拼图）</h4>
+          {!village.surveyed && <p className="note">迷雾未揭，图纸放不进去。</p>}
+          {industryNodes.map((n) => {
+            const built = state.builtNodes.some((b) => b.nodeId === n.id && b.villageId === villageId);
+            const picked = draft.buildNodes.some((b) => b.nodeId === n.id && b.villageId === villageId);
+            const affordable = state.county.fiscalFund >= n.cost;
+            return (
+              <label
+                key={n.id}
+                style={{ fontSize: 14, display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}
+              >
+                <input
+                  type="checkbox"
+                  disabled={!village.surveyed || built}
+                  checked={picked}
+                  onChange={() => toggleBuildNode(n.id, villageId)}
+                />
+                <span>
+                  {n.name}（{n.tags.map((t) => TAG_NAMES_BUILT[t] ?? t).join('+')}）· 造价 {n.cost} 财政
+                  {built ? ' · 已落成' : !affordable ? ' · 财政不足' : ''}
+                </span>
+              </label>
+            );
+          })}
+        </div>
 
         {/* 分类施策（五个一批） */}
         <div className="sandbox-block">

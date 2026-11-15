@@ -15,9 +15,9 @@ import { makeCadres } from '../config/world';
 // v9（治理护盾）：新增村级治理护盾，v8 存档自动迁移。
 // ============================================================
 
-const STORAGE_KEY = 'chuda.save.v12';
-const LEGACY_KEYS = ['chuda.save.v11', 'chuda.save.v10', 'chuda.save.v9', 'chuda.save.v8', 'chuda.save.v7', 'chuda.save.v6', 'chuda.save.v5', 'chuda.save.v4', 'chuda.save.v3', 'chuda.save.v2', 'chuda.save.v1'];
-export const SAVE_VERSION = 12;
+const STORAGE_KEY = 'chuda.save.v13';
+const LEGACY_KEYS = ['chuda.save.v12', 'chuda.save.v11', 'chuda.save.v10', 'chuda.save.v9', 'chuda.save.v8', 'chuda.save.v7', 'chuda.save.v6', 'chuda.save.v5', 'chuda.save.v4', 'chuda.save.v3', 'chuda.save.v2', 'chuda.save.v1'];
+export const SAVE_VERSION = 13;
 
 export function serialize(state: GameState): string {
   return JSON.stringify(state);
@@ -149,6 +149,11 @@ function migrateV11(data: GameState): void {
   }
 }
 
+/** v12 → v13：补自建产业设施（builtNodes，§15） */
+function migrateV12(data: GameState): void {
+  if (!Array.isArray(data.builtNodes)) data.builtNodes = [];
+}
+
 export function deserialize(json: string): GameState {
   const data = JSON.parse(json) as GameState;
   if (data.version === 1) {
@@ -193,6 +198,10 @@ export function deserialize(json: string): GameState {
   }
   if (data.version === 11) {
     migrateV11(data);
+    data.version = 12;
+  }
+  if (data.version === 12) {
+    migrateV12(data);
     data.version = SAVE_VERSION;
   }
   if (data.version !== SAVE_VERSION) {

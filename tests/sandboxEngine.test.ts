@@ -176,7 +176,7 @@ describe('§13 动态事件池与自由沙盒引擎', () => {
   });
 
   it('配置表自洽：5 个示例事件条件可解析、权重为正、有接受/拒绝效果', () => {
-    expect(dynamicEvents.length).toBe(7);
+    expect(dynamicEvents.length).toBe(9);
     for (const ev of dynamicEvents) {
       expect(ev.weight).toBeGreaterThan(0);
       expect(Object.keys(ev.effectsOnAccept).length).toBeGreaterThan(0);

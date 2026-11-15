@@ -32,7 +32,7 @@ export function createInitialState(seed: number, anchor: PlayerAnchor): GameStat
   }
 
   return {
-    version: 12,
+    version: 13,
     seed,
     status: 'running',
     anchor,
@@ -117,5 +117,6 @@ export function createInitialState(seed: number, anchor: PlayerAnchor): GameStat
     streaks: { fraudClean: 0, cutCorners: 0, rank: 0, villageStall: {} },
     pendingRecruits: [],
     declinedRecruits: [],
+    builtNodes: [], // §15 自建产业设施
   };
 }

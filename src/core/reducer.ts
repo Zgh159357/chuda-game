@@ -1,6 +1,7 @@
 import type { GameState, PhaseId, Quarter, Round, RoundActions, RoundOutcome, RoundRecord, Year } from './types';
 import { config } from '../config';
-import { seedRng } from './rng';
+import { roundRng } from './rng';
+import { drawCatalyst } from './sandbox/industryEngine';
 import { createTurnCtx } from './systems/context';
 import { evaluateCheckpoints } from './systems/checkpoints';
 import { resolveActions } from './systems/actions';
@@ -41,14 +42,6 @@ import { derivePhase } from './state/phaseMachine';
 // 重构新增：干部精力（regen/行动/settle）、公文发牌（round 开始）、
 //           公文批复（行动层）、逾期自动结算（round 末）。
 // ============================================================
-
-/** 从回合号确定性派生 rng 种子（同 seed+round 永远同结果） */
-function hashSeed(seed: number, round: Round): number {
-  let h = seed >>> 0;
-  h = (h ^ Math.imul(round, 0x9e3779b1)) >>> 0;
-  h = Math.imul(h ^ (h >>> 16), 0x85ebca6b) >>> 0;
-  return h;
-}
 
 /** 解析时间标签 → year/quarter（保持显示一致） */
 function parseTimeLabel(label: string): { year: Year; quarter: Quarter } {
@@ -117,8 +110,10 @@ export function playRound(prev: GameState, actions: RoundActions, maxRounds: Rou
     state.county.quarter = quarter;
   }
 
-  const rng = seedRng(hashSeed(state.seed, round));
+  const rng = roundRng(state.seed, round);
   const ctx = createTurnCtx(state, rng, round);
+  // §15 本回合商机（每回合首抽，保证 UI「商机横幅」与结算完全一致）
+  const catalyst = drawCatalyst(ctx.rng);
 
   // 3. 收入
   applyIncome(state);
@@ -192,7 +187,7 @@ export function playRound(prev: GameState, actions: RoundActions, maxRounds: Rou
   settleFloorDefense(state, ctx); // §10 底线防御：内生治理将破 20 → 自动拨财政锁底（组织之后）
   settleIndustry(state, ctx);
   applyLogistics(state, ctx); // 物流/产业链：工厂项目缺原料/道路/物流站 → 烂尾+扣财政
-  settleVillageSynergies(state, ctx); // §14 涌现式融合：资源标签 × 产业标签 → 流派解锁
+  settleVillageSynergies(state, ctx, catalyst); // §14/§15 涌现式融合：资源标签 × 产业标签 → 流派解锁（商机联动）
   settleResettlement(state, ctx);
   settleSubsidy(state, ctx);
   settleCollaboration(state, ctx);

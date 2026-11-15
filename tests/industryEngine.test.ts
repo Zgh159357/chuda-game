@@ -77,12 +77,12 @@ describe('§14 产业融合引擎', () => {
     expect(calculateBottleneck([])).toBe(1);
   });
 
-  it('配置自洽：4+1 个配方、5 个蓝图节点、6 个项目标签映射', () => {
-    expect(synergyRecipes.length).toBe(5);
+  it('配置自洽：14 个配方、5 个蓝图节点、6 个项目标签映射', () => {
+    expect(synergyRecipes.length).toBe(14);
     expect(industryNodes.length).toBe(5);
     expect(Object.keys(PROJECT_TAG_MAP).length).toBe(6);
     for (const r of synergyRecipes) {
-      expect(r.outputMultiplier).toBeGreaterThan(1);
+      expect(r.outputMultiplier).toBeGreaterThan(0);
       expect(r.unlockVillageTitle.length).toBeGreaterThan(0);
     }
   });

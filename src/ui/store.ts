@@ -91,6 +91,7 @@ function defaultDraft(state: GameState | null): DraftState {
     heroAssign: [],
     recruitChoices: [],
     mentorship: [],
+    buildNodes: [], // §15 自建产业设施（村庄沙盘蓝图落子）
   };
 }
 
@@ -188,7 +189,8 @@ interface GameStore {
   closeRecruit: () => void;
   answerRecruit: (heroId: string, accepted: boolean) => void; // 写入 draft.recruitChoices
 
-  toggleMentorship: (villageId: string) => void; // 传帮带指令：勾选/取消本回合驻村村
+  toggleMentorship: (villageId: string) => void;
+  toggleBuildNode: (nodeId: string, villageId: string) => void; // 传帮带指令：勾选/取消本回合驻村村
   clearFloorDefenseFlash: () => void;
   clearSynergyFlash: () => void;
 
@@ -520,6 +522,19 @@ export const useGame = create<GameStore>((set, get) => ({
     });
   },
 
+  toggleBuildNode: (nodeId, villageId) => {
+    const { draft } = get();
+    const has = draft.buildNodes.some((b) => b.nodeId === nodeId && b.villageId === villageId);
+    set({
+      draft: {
+        ...draft,
+        buildNodes: has
+          ? draft.buildNodes.filter((b) => !(b.nodeId === nodeId && b.villageId === villageId))
+          : [...draft.buildNodes, { nodeId, villageId }],
+      },
+    });
+  },
+
   clearFloorDefenseFlash: () => set({ floorDefenseFlash: null }),
   clearSynergyFlash: () => set({ synergyFlash: null }),
 
@@ -644,6 +659,7 @@ export const useGame = create<GameStore>((set, get) => ({
       heroAssign: draft.heroAssign,
       recruitChoices: draft.recruitChoices,
       mentorship: draft.mentorship,
+      buildNodes: draft.buildNodes,
     };
     const outcome = playRound(state, actions, maxRounds);
     saveToLocal(outcome.state);

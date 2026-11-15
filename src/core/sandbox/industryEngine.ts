@@ -1,5 +1,5 @@
-import type { GameState, IndustryNode, IndustryTag, ResourceTag, SynergyRecipe, Tile } from '../types';
-import { deriveIndustryNodes, synergyRecipes } from '../../config/industry';
+import type { GameState, IndustryNode, IndustryTag, ResourceTag, SynergyCatalyst, SynergyRecipe, Tile } from '../types';
+import { deriveIndustryNodes, synergyRecipes, synergyCatalysts, industryNodes } from '../../config/industry';
 import { deriveTiles } from './logistics';
 
 // ============================================================
@@ -18,16 +18,22 @@ function hasAll<T>(owned: T[], required: T[]): boolean {
 }
 
 /** 单配方命中判定（calculateSynergy 与 detectVillageSynergies 共用） */
-function matchesRecipe(
+export function matchesRecipe(
   tile: Tile,
   industryTags: IndustryTag[],
-  recipe: SynergyRecipe
+  recipe: SynergyRecipe,
+  catalyst?: SynergyCatalyst | null
 ): boolean {
   const tileResources: ResourceTag[] = normalizeTags(tile.environment.resources ?? []);
   const resourceOk = hasAll(tileResources, recipe.requiredResourceTags);
   const industryOk = hasAll(industryTags, recipe.requiredIndustryTags);
   const terrainOk = !recipe.requiredTerrain || tile.environment.terrain === recipe.requiredTerrain;
-  return resourceOk && industryOk && terrainOk;
+  // §15 反面配方：有禁用标签则成不了（民宿没路 → 有 logistics 就否决）
+  const forbidden = recipe.forbiddenIndustryTags ?? [];
+  const forbiddenOk = forbidden.every((t) => !industryTags.includes(t));
+  // §15 商机限时：配方挂 catalyst 时，仅当本回合商机匹配才可炼出
+  const catalystOk = !recipe.catalystId || catalyst?.id === recipe.catalystId;
+  return resourceOk && industryOk && terrainOk && forbiddenOk && catalystOk;
 }
 
 /**
@@ -39,31 +45,79 @@ function matchesRecipe(
 export function calculateSynergy(
   tile: Tile,
   surroundingNodes: IndustryNode[],
-  recipes: SynergyRecipe[]
+  recipes: SynergyRecipe[],
+  catalyst?: SynergyCatalyst | null
 ): SynergyRecipe | null {
   const industryTags: IndustryTag[] = normalizeTags(
     surroundingNodes.flatMap((n) => n.tags)
   );
   for (const recipe of recipes) {
-    if (matchesRecipe(tile, industryTags, recipe)) return recipe;
+    if (matchesRecipe(tile, industryTags, recipe, catalyst)) return recipe;
   }
   return null;
 }
 
 /**
- * 村庄涌现式融合检测：该村地块（资源标签）+ 本村运营中的产业项目（产业标签）。
- * 返回所有命中的配方（可同时解锁多条流派）。
+ * §15 本回合商机抽签（每回合开局第一抽，UI「商机横幅」与结算共用同一 rng 序）。
+ * 返回抽中的催化剂；null=本回合无商机。
  */
-export function detectVillageSynergies(state: GameState, villageId: string): SynergyRecipe[] {
+export function drawCatalyst(rng: { (): number }): SynergyCatalyst | null {
+  const totalWeight = synergyCatalysts.reduce((s, c) => s + c.weight, 0);
+  const emptyWeight = Math.max(0, 6 - totalWeight); // 无商机档：让天时不是天天有
+  const roll = rng() * (totalWeight + emptyWeight);
+  let acc = 0;
+  for (const c of synergyCatalysts) {
+    acc += c.weight;
+    if (roll < acc) return c;
+  }
+  return null;
+}
+
+/**
+ * 村庄涌现式融合检测：该村地块（资源标签）+ 本村运营中的产业项目与自建设施（产业标签）。
+ * 返回所有命中的配方（可同时解锁多条流派）。
+ * §15：内置进化前置（requiredTitles）、人才联动（requiredHeroId）、商机限时（catalystId）。
+ */
+export function detectVillageSynergies(
+  state: GameState,
+  villageId: string,
+  catalyst?: SynergyCatalyst | null
+): SynergyRecipe[] {
   const tile = deriveTiles(state).find((t) => t.villageId === villageId);
   if (!tile) return [];
   const villageProjects = state.projects.filter(
     (p) => p.villageId === villageId && (p.status === 'active' || p.status === 'recovered')
   );
-  if (villageProjects.length === 0) return [];
-  const nodes = deriveIndustryNodes(villageProjects);
+  const built: (IndustryNode & { capacity: number })[] = (state.builtNodes ?? [])
+    .filter((b) => b.villageId === villageId)
+    .map((b) => {
+      const spec = industryNodes.find((n) => n.id === b.nodeId);
+      return {
+        id: b.id,
+        name: spec?.name ?? b.nodeId,
+        tags: spec?.tags ?? [],
+        baseOutput: spec?.baseOutput ?? 10,
+        cost: 0,
+        capacity: 0,
+      };
+    });
+  if (villageProjects.length === 0 && built.length === 0) return [];
+  const nodes = deriveIndustryNodes(villageProjects).concat(built);
   const industryTags: IndustryTag[] = normalizeTags(nodes.flatMap((n) => n.tags));
-  return synergyRecipes.filter((r) => matchesRecipe(tile, industryTags, r));
+  const titles = state.villages.find((v) => v.id === villageId)?.synergyTitles ?? [];
+  return synergyRecipes.filter((r) => {
+    if (!matchesRecipe(tile, industryTags, r, catalyst)) return false;
+    // §15 进化前置：配方需要已解锁的头衔
+    if (r.requiredTitles && !r.requiredTitles.every((t) => titles.includes(t))) return false;
+    // §15 人才联动：需要指定人才派驻本村
+    if (r.requiredHeroId) {
+      const hero = (state.heroes ?? []).find(
+        (h) => h.heroId === r.requiredHeroId && h.villageId === villageId
+      );
+      if (!hero) return false;
+    }
+    return true;
+  });
 }
 
 /**

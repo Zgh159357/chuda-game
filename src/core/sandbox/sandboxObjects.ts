@@ -4,6 +4,7 @@
 // ============================================================
 import type { DraftState, GameState } from '../types';
 import { config } from '../../config';
+import { industryNodes } from '../../config/industry';
 
 export const GRID = { w: 6, h: 6 };
 export const COUNTY_CELL: [number, number] = [3, 3];
@@ -63,7 +64,16 @@ const CARD_KIND: Record<string, SandboxBuildingKind> = {
   e_service: 'villageHall',
 };
 
-/** 沙盘建筑清单：现有项目（永久）+ 本回合落卡（半透明预览） */
+/** §15 自建产业设施蓝图 → 建筑外形 */
+export const BUILT_NODE_KIND: Record<string, SandboxBuildingKind> = {
+  node_herb: 'greenhouse',
+  node_factory: 'factory',
+  node_guesthouse: 'villageHall',
+  node_coldchain: 'factory',
+  node_pv: 'solar',
+};
+
+/** 沙盘建筑清单：现有项目（永久）+ 自建设施（永久）+ 本回合落卡（半透明预览） */
 export function deriveSandboxObjects(state: GameState, draft: DraftState): SandboxObject[] {
   const out: SandboxObject[] = [];
 
@@ -81,6 +91,22 @@ export function deriveSandboxObjects(state: GameState, draft: DraftState): Sandb
       status: p.status === 'broken' ? 'permanent' : 'permanent',
       cursed: p.subsidyDependence >= 60,
       label: p.name,
+    });
+  }
+
+  // §15 永久建筑：玩家自建产业设施
+  for (const b of state.builtNodes ?? []) {
+    const cell = VILLAGE_CELLS[b.villageId] ?? [3, 3];
+    const spec = industryNodes.find((n) => n.id === b.nodeId);
+    out.push({
+      id: `built_${b.id}`,
+      kind: BUILT_NODE_KIND[b.nodeId] ?? 'workshop',
+      villageId: b.villageId,
+      cell,
+      h: 0.2,
+      status: 'permanent',
+      cursed: false,
+      label: spec?.name ?? b.nodeId,
     });
   }
 

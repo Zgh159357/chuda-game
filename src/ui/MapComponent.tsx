@@ -17,6 +17,8 @@ import { HeroesPanel } from './HeroesPanel';
 import { DiaryDrawer } from './DiaryDrawer';
 import { config } from '../config';
 import { resilienceRatio } from '../core/systems/resilience';
+import { drawCatalyst } from '../core/sandbox/industryEngine';
+import { roundRng } from '../core/rng';
 
 export function MapComponent() {
   const state = useGame((s) => s.state);
@@ -34,6 +36,8 @@ export function MapComponent() {
   const blockingSpec = blocking ? config.eventFiles.find((f) => f.id === blocking) : null;
   const ratio = resilienceRatio(state);
   const lastRound = state.history[state.history.length - 1];
+  // §15 本回合商机（与 reducer 结算同序首抽，显示与判定完全一致）
+  const catalyst = drawCatalyst(roundRng(state.seed, state.county.round));
   const absorbedLastRound = lastRound
     ? lastRound.outcome.events.some((e) => e.type === 'resilienceAbsorbed')
     : false;
@@ -189,6 +193,16 @@ export function MapComponent() {
             <span key={lastRound.round} className="shield-crack" title="上一回合：组织韧性抵挡了治理力损耗">
               ⛨
             </span>
+          )}
+        </div>
+        <div className="catalyst-banner">
+          <span className="catalyst-title">本回合商机</span>
+          {catalyst ? (
+            <span>
+              <b>{catalyst.name}</b> · {catalyst.desc}
+            </span>
+          ) : (
+            <span>无特别商机，按部就班</span>
           )}
         </div>
         <button onClick={() => setDiaryOpen(true)}>工作日记</button>

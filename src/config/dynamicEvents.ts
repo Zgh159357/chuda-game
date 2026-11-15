@@ -96,6 +96,34 @@ export const dynamicEvents: GameEventConfig[] = [
     effectsOnAccept: { fiscalFund: -15, ecology: 10, trust: 4 }, // 紧急建环保设施
     effectsOnDecline: { trust: -8, returnRisk: 6 }, // 视而不见，口碑崩坏
   },
+  {
+    // §15 头衔联动（春茶名村）：机遇——茶商包山头
+    id: 'ev_tea_order',
+    title: '茶商来包山头了',
+    description: '外地的茶商揣着定金进村，要包下整片茶园。合同递到村委会桌上，村支书拿不定主意。',
+    category: 'opportunity',
+    conditions: [],
+    weight: 32,
+    cooldownTurns: 10,
+    targetVillage: true,
+    requiredSynergyTitle: 'recipe_selenium_tea',
+    effectsOnAccept: { fiscalFund: 18, industryChannel: 8, trust: 6 }, // 订单落地，茶价翻着跟头涨
+    effectsOnDecline: { trust: -2, returnRisk: 4 }, // 拒绝了定金，明年行情没人说得准
+  },
+  {
+    // §15 头衔联动（直播助农村）：危机——直播翻车
+    id: 'ev_live_breakdown',
+    title: '直播翻车了',
+    description: '昨天那场直播，评论区炸了：有人翻出了三年前的旧账，说村里摆拍。订单退了一半，主播红了眼眶。',
+    category: 'crisis',
+    conditions: [],
+    weight: 28,
+    cooldownTurns: 12,
+    targetVillage: true,
+    requiredSynergyTitle: 'recipe_live_shop',
+    effectsOnAccept: { fiscalFund: -10, trust: 5, fakeProb: -8 }, // 连夜发声明+补货，把口碑捞回来
+    effectsOnDecline: { trust: -7, returnRisk: 6, industryChannel: -6 }, // 装没看见，直播间凉了
+  },
 ];
 
 /** 连锁事件（延迟爆发）：由 ev_swan_rumor 拒绝时注入 */
