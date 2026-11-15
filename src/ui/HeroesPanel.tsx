@@ -57,7 +57,7 @@ export function HeroesPanel() {
               <p className="hero-desc">{spec.desc}</p>
               {spec.flawDesc ? <p className="hero-flaw">⚠ {spec.flawDesc}</p> : null}
               <div className="hero-assign">
-                <span style={{ fontSize: 12 }}>
+                <span style={{ fontSize: 14 }}>
                   当前：{curVillage ? state.villages.find((v) => v.id === curVillage)?.name ?? '村庄' : '未派驻'}
                 </span>
                 <select

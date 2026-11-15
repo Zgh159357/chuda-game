@@ -88,11 +88,11 @@ export function EndScreen(props: { state: GameState; onRestart: () => void }) {
               traps.map((t) => (
                 <div key={t.rewardId} className="trap-box">
                   <b>{config.rewards.find((r) => r.id === t.rewardId)?.effect ?? t.rewardId}</b>
-                  <p style={{ fontSize: 12.5 }}>{t.title}</p>
+                  <p style={{ fontSize: 14.5 }}>{t.title}</p>
                 </div>
               ))
             )}
-            <p className="annotation" style={{ fontSize: 12, marginTop: 8 }}>
+            <p className="annotation" style={{ fontSize: 14, marginTop: 8 }}>
               争先承诺、快速摘帽、高补贴产业、考核拉满、全兜底——
               它们都曾给过即时奖励，债在终局才见。
             </p>
@@ -110,7 +110,7 @@ export function EndScreen(props: { state: GameState; onRestart: () => void }) {
                 return (
                   <li key={a.id} style={{ opacity: got ? 1 : 0.35 }}>
                     {a.isNegative ? '🪞' : '▣'} {a.name}
-                    <span className="annotation" style={{ fontSize: 11, marginLeft: 6 }}>{got ? '已收录' : '未达成'}</span>
+                    <span className="annotation" style={{ fontSize: 13, marginLeft: 6 }}>{got ? '已收录' : '未达成'}</span>
                   </li>
                 );
               })}

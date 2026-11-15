@@ -99,9 +99,9 @@ export function StartScene(props: {
               >
                 <h4>
                   {a.title}
-                  <span className="annotation" style={{ fontSize: 12 }}>{a.tag}</span>
+                  <span className="annotation" style={{ fontSize: 14 }}>{a.tag}</span>
                 </h4>
-                <p style={{ fontSize: 12.5 }}>{a.desc}</p>
+                <p style={{ fontSize: 14.5 }}>{a.desc}</p>
               </div>
             ))}
 
@@ -135,17 +135,17 @@ export function StartScene(props: {
               onChange={onPickFile}
             />
             {importError && (
-              <p className="annotation" style={{ fontSize: 12, color: 'var(--seal)' }}>
+              <p className="annotation" style={{ fontSize: 14, color: 'var(--seal)' }}>
                 {importError}
                 <button
-                  style={{ marginLeft: 8, fontSize: 11, border: 'none', background: 'none', color: 'var(--indigo)', cursor: 'pointer' }}
+                  style={{ marginLeft: 8, fontSize: 13, border: 'none', background: 'none', color: 'var(--indigo)', cursor: 'pointer' }}
                   onClick={clearImportError}
                 >
                   知道了
                 </button>
               </p>
             )}
-            <p className="annotation" style={{ fontSize: 12 }}>
+            <p className="annotation" style={{ fontSize: 14 }}>
               本游戏所有地名、人物、数据与政策文本均为虚构。
               不还原真实政策，不虚构真实人物，不做苦难奇观。
             </p>

@@ -50,7 +50,7 @@ export function CountyDesk() {
       <div className="paper-body">
         {/* 瞄准单位 */}
         <div style={{ marginBottom: 10 }}>
-          <label style={{ fontSize: 12, color: 'rgba(58,46,36,0.75)' }}>瞄准单位（精度越高、行政成本越高）：</label>
+          <label style={{ fontSize: 14, color: 'rgba(58,46,36,0.75)' }}>瞄准单位（精度越高、行政成本越高）：</label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
             {(Object.keys(TARGETING_LABELS) as TargetingLevel[]).map((lv) => (
               <button
@@ -63,14 +63,14 @@ export function CountyDesk() {
               </button>
             ))}
           </div>
-          <span style={{ fontSize: 11, color: 'rgba(58,46,36,0.6)' }}>
+          <span style={{ fontSize: 13, color: 'rgba(58,46,36,0.6)' }}>
             当前：{TARGETING_LABELS[draft.targetingLevel]}（{TARGETING_COSTS[draft.targetingLevel]}）
           </span>
         </div>
 
         {/* 财政 / 协作 */}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <label style={{ fontSize: 12 }}>
+          <label style={{ fontSize: 14 }}>
             财政投入（余 {Math.round(c.fiscalFund)}）：
             <input
               type="number"
@@ -80,7 +80,7 @@ export function CountyDesk() {
               style={{ width: 64 }}
             />
           </label>
-          <label style={{ fontSize: 12 }}>
+          <label style={{ fontSize: 14 }}>
             协作资金（余 {Math.round(c.cooperationFund)}）：
             <input
               type="number"
@@ -94,7 +94,7 @@ export function CountyDesk() {
 
         {/* 承诺档位 */}
         <div style={{ marginTop: 10 }}>
-          <label style={{ fontSize: 12, color: 'rgba(58,46,36,0.75)' }}>承诺档位：</label>
+          <label style={{ fontSize: 14, color: 'rgba(58,46,36,0.75)' }}>承诺档位：</label>
           <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
             {(Object.keys(COMMITMENT_LABELS) as CommitmentLevel[]).map((lv) => (
               <button
@@ -110,11 +110,11 @@ export function CountyDesk() {
 
         {/* 考核三旋钮 */}
         <div style={{ marginTop: 10 }}>
-          <label style={{ fontSize: 12, color: 'rgba(58,46,36,0.75)' }}>
+          <label style={{ fontSize: 14, color: 'rgba(58,46,36,0.75)' }}>
             考核三旋钮（密度 &gt;60 会触发迎检负担与「做证明」）：
           </label>
           <div style={{ display: 'flex', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
-            <label style={{ fontSize: 12 }}>
+            <label style={{ fontSize: 14 }}>
               考核密度
               <input
                 type="number"
@@ -129,7 +129,7 @@ export function CountyDesk() {
                 style={{ width: 56 }}
               />
             </label>
-            <label style={{ fontSize: 12 }}>
+            <label style={{ fontSize: 14 }}>
               第三方
               <input
                 type="number"
@@ -144,7 +144,7 @@ export function CountyDesk() {
                 style={{ width: 56 }}
               />
             </label>
-            <label style={{ fontSize: 12 }}>
+            <label style={{ fontSize: 14 }}>
               群众直报
               <input
                 type="number"
@@ -164,9 +164,9 @@ export function CountyDesk() {
 
         {/* 驻村工作队 */}
         <div style={{ marginTop: 10 }}>
-          <label style={{ fontSize: 12, color: 'rgba(58,46,36,0.75)' }}>驻村工作队（每村一支派出单位）：</label>
+          <label style={{ fontSize: 14, color: 'rgba(58,46,36,0.75)' }}>驻村工作队（每村一支派出单位）：</label>
           {state.villages.map((v) => (
-            <div key={v.id} style={{ fontSize: 12, marginTop: 4 }}>
+            <div key={v.id} style={{ fontSize: 14, marginTop: 4 }}>
               {v.name}：
               <select
                 value={draft.dispatch.find((d) => d.villageId === v.id)?.unitId ?? v.dispatchedUnitId ?? ''}
@@ -191,7 +191,7 @@ export function CountyDesk() {
 
         {/* 干部技能树 */}
         <div style={{ marginTop: 10 }}>
-          <label style={{ fontSize: 12, color: 'rgba(58,46,36,0.75)' }}>
+          <label style={{ fontSize: 14, color: 'rgba(58,46,36,0.75)' }}>
             干部技能树（治理经验点 {c.skillPoints}，里程碑回合结算后各得 1 点）：
           </label>
           {(['massWork', 'projectOps', 'orgBuilding'] as const).map((line) => {
@@ -199,7 +199,7 @@ export function CountyDesk() {
             const specs = config.skills.filter((s) => s.line === line);
             return (
               <div key={line} style={{ marginTop: 4 }}>
-                <span style={{ fontSize: 12, color: 'rgba(58,46,36,0.75)' }}>{lineName}：</span>
+                <span style={{ fontSize: 14, color: 'rgba(58,46,36,0.75)' }}>{lineName}：</span>
                 {specs.map((spec) => {
                   const owned = state.unlocked.skills.includes(spec.id);
                   const prev =
@@ -212,7 +212,7 @@ export function CountyDesk() {
                       className={owned ? 'toggled' : ''}
                       disabled={!afford || !prereqOk}
                       title={`${spec.desc}（${spec.cost} 点${prereqOk ? '' : '，需先点上一级'}）`}
-                      style={{ marginRight: 4, marginTop: 2, fontSize: 12 }}
+                      style={{ marginRight: 4, marginTop: 2, fontSize: 14 }}
                       onClick={() =>
                         updateDraft({
                           skills: draft.skills.includes(spec.id)

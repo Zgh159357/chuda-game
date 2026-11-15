@@ -79,7 +79,7 @@ export function MapComponent() {
             {state.projects
               .filter((p) => p.status === 'stalled' || p.status === 'broken')
               .map((p) => (
-                <div key={p.id} style={{ fontSize: 12, marginBottom: 6 }}>
+                <div key={p.id} style={{ fontSize: 14, marginBottom: 6 }}>
                   <b>⚠ {p.name}</b>（{p.status === 'stalled' ? '停滞' : '烂尾'}）：
                   <select
                     value={draft.repair.find((r) => r.projectId === p.id)?.mode ?? ''}
@@ -103,11 +103,11 @@ export function MapComponent() {
 
             {state.signals.filter((s) => !s.investigated).length > 0 && (
               <div style={{ marginTop: 8 }}>
-                <span style={{ fontSize: 12, color: 'rgba(58,46,36,0.75)' }}>模糊信号（追查耗 1 干部精力）：</span>
+                <span style={{ fontSize: 14, color: 'rgba(58,46,36,0.75)' }}>模糊信号（追查耗 1 干部精力）：</span>
                 {state.signals
                   .filter((s) => !s.investigated)
                   .map((s) => (
-                    <div key={s.id} style={{ fontSize: 12, marginTop: 3 }}>
+                    <div key={s.id} style={{ fontSize: 14, marginTop: 3 }}>
                       <label>
                         <input
                           type="checkbox"
@@ -129,9 +129,9 @@ export function MapComponent() {
 
             {state.pendingProposals.length > 0 && (
               <div style={{ marginTop: 8 }}>
-                <span style={{ fontSize: 12, color: 'rgba(58,46,36,0.75)' }}>村民提案（采纳：参与↑ 信任↑）：</span>
+                <span style={{ fontSize: 14, color: 'rgba(58,46,36,0.75)' }}>村民提案（采纳：参与↑ 信任↑）：</span>
                 {state.pendingProposals.map((p) => (
-                  <div key={p.id} style={{ fontSize: 12, marginTop: 3 }}>
+                  <div key={p.id} style={{ fontSize: 14, marginTop: 3 }}>
                     <label>
                       <input
                         type="checkbox"

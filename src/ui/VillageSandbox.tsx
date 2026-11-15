@@ -74,7 +74,7 @@ export function VillageSandbox({ villageId }: { villageId: string }) {
       <div className="paper-body">
         {assignedCards.length > 0 && (
           <div style={{ marginBottom: 8 }}>
-            <span style={{ fontSize: 12, color: 'var(--indigo)' }}>
+            <span style={{ fontSize: 14, color: 'var(--indigo)' }}>
               本回合指派的施政方针：{assignedCards.map((x) => x?.name).join('、')}
             </span>
           </div>
@@ -85,7 +85,7 @@ export function VillageSandbox({ villageId }: { villageId: string }) {
           <h4>产业项目</h4>
           {projects.length === 0 && <p className="note">这个村还没有项目。B 阶段起可在产业槽布局产业奖补/以工代赈。</p>}
           {projects.map((p) => (
-            <div key={p.id} style={{ fontSize: 12, marginBottom: 4 }}>
+            <div key={p.id} style={{ fontSize: 14, marginBottom: 4 }}>
               <b>{p.name}</b>（{p.status === 'active' ? '运营中' : p.status === 'stalled' ? '停滞' : p.status === 'broken' ? '烂尾' : '已修复'}）
               {p.subsidyDependence > 0 && ` · 补贴依赖 ${Math.round(p.subsidyDependence)}%`}
             </div>
@@ -113,7 +113,7 @@ export function VillageSandbox({ villageId }: { villageId: string }) {
               </option>
             ))}
           </select>
-          <span style={{ fontSize: 11, color: 'rgba(58,46,36,0.6)', marginLeft: 6 }}>
+          <span style={{ fontSize: 13, color: 'rgba(58,46,36,0.6)', marginLeft: 6 }}>
             当前：{village.coopType ? COOP_NAMES[village.coopType] : '未设载体'}（双绑 {Math.round(village.dualBindStability)}）
           </span>
         </div>
@@ -122,7 +122,7 @@ export function VillageSandbox({ villageId }: { villageId: string }) {
         {village.dispatchedUnitId && (
           <div className="sandbox-block">
             <h4>传帮带指令（驻村队 × 村两委）</h4>
-            <label style={{ fontSize: 12, display: 'block' }}>
+            <label style={{ fontSize: 14, display: 'block' }}>
               <input
                 type="checkbox"
                 checked={draft.mentorship.includes(villageId)}
@@ -140,7 +140,7 @@ export function VillageSandbox({ villageId }: { villageId: string }) {
           {households.map((hh) => {
             const cur = measureFor(hh.id);
             return (
-              <div key={hh.id} style={{ fontSize: 12, marginBottom: 4, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <div key={hh.id} style={{ fontSize: 14, marginBottom: 4, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                 <span>
                   {hh.name}（{TAG_NAMES[hh.tag]}，{hh.population} 人，劳力 {Math.round(hh.laborAbility * 100)}%）
                 </span>
@@ -172,7 +172,7 @@ export function VillageSandbox({ villageId }: { villageId: string }) {
               const queued = draft.resettle.some((r) => r.groupId === h.id);
               const negotiated = draft.negotiations.some((n) => n.groupId === h.id);
               return (
-                <label key={h.id} style={{ fontSize: 12, display: 'block', marginBottom: 3 }}>
+                <label key={h.id} style={{ fontSize: 14, display: 'block', marginBottom: 3 }}>
                   <input
                     type="checkbox"
                     checked={queued}
@@ -213,7 +213,7 @@ export function VillageSandbox({ villageId }: { villageId: string }) {
             const curAssign = draft.heroAssign.find((a) => a.heroId === h.heroId);
             const effVillage = curAssign?.villageId ?? h.villageId;
             return (
-              <div key={h.heroId} style={{ fontSize: 12, marginBottom: 4, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div key={h.heroId} style={{ fontSize: 14, marginBottom: 4, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <b>{spec.name}</b>
                 <span>（{spec.role}）</span>
                 <span style={{ color: 'var(--indigo)' }}>{spec.desc}</span>

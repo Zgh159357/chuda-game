@@ -570,7 +570,7 @@ export function MapSandbox() {
 
       {/* 节点交互（当前所在格） */}
       <div className="node-actions">
-        <div style={{ fontSize: 12, color: 'rgba(58,46,36,0.75)', marginBottom: 4 }}>
+        <div style={{ fontSize: 14, color: 'rgba(58,46,36,0.75)', marginBottom: 4 }}>
           在「{playerNode.label}」可以办的事（个人精力余 {remainingStamina()}）：
         </div>
         {nodeActionsHere.length === 0 && (

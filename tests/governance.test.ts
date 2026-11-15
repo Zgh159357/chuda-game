@@ -167,7 +167,7 @@ describe('§11 组织度公式重构', () => {
     const s0 = createInitialState(1, 'local');
     s0.villages[0].governanceShield = 5;
     const back = deserialize(serialize(s0));
-    expect(back.version).toBe(9);
+    expect(back.version).toBe(10);
     expect(back.villages[0].governanceShield).toBe(5);
   });
 });

@@ -39,12 +39,12 @@ export function EventInbox() {
                 {spec.urgency === '急' && <span className="urgent">急</span>}
                 <b style={{ fontFamily: "'Songti SC', 'SimSun', serif" }}>{spec.title}</b>
                 {decided && (
-                  <span className="stat" style={{ marginLeft: 'auto', fontSize: 11 }}>
+                  <span className="stat" style={{ marginLeft: 'auto', fontSize: 13 }}>
                     已批复：{decided}
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: 12, color: 'rgba(58,46,36,0.7)' }}>
+              <div style={{ fontSize: 14, color: 'rgba(58,46,36,0.7)' }}>
                 来文：{spec.sender} · 限期第 {item.deadline} 回合前
               </div>
             </div>

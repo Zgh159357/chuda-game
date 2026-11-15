@@ -50,18 +50,18 @@ export function SlotBoard({ villageId }: Props) {
                 <span className="slot-kind">{KIND_LABEL[kind]}</span>
                 {card ? (
                   <>
-                    <b style={{ fontSize: 12 }}>{card.name}</b>
-                    <span style={{ fontSize: 10, color: 'rgba(58,46,36,0.65)' }}>
+                    <b style={{ fontSize: 14 }}>{card.name}</b>
+                    <span style={{ fontSize: 12, color: 'rgba(58,46,36,0.65)' }}>
                       {card.cost.cadre ? `干部精力 ${card.cost.cadre}` : ''}
                       {card.cost.fiscal ? ` 财政 ${card.cost.fiscal}` : ''}
                       {card.cost.coop ? ` 协作 ${card.cost.coop}` : ''}
                     </span>
                     {assigned && (
-                      <span style={{ fontSize: 10, color: 'var(--seal)' }}>指派：{assigned}</span>
+                      <span style={{ fontSize: 12, color: 'var(--seal)' }}>指派：{assigned}</span>
                     )}
                   </>
                 ) : (
-                  <span style={{ fontSize: 11, color: 'rgba(58,46,36,0.5)' }}>空</span>
+                  <span style={{ fontSize: 13, color: 'rgba(58,46,36,0.5)' }}>空</span>
                 )}
               </div>
             );
@@ -78,7 +78,7 @@ export function SlotBoard({ villageId }: Props) {
                 <button
                   key={kind}
                   className={assigned ? 'toggled' : ''}
-                  style={{ marginRight: 6, fontSize: 12 }}
+                  style={{ marginRight: 6, fontSize: 14 }}
                   onClick={() =>
                     updateDraft({
                       slots: {
@@ -100,7 +100,7 @@ export function SlotBoard({ villageId }: Props) {
           if (candidates.length === 0) return null;
           return (
             <div key={kind} style={{ margin: '8px 0' }}>
-              <div style={{ fontSize: 12, color: 'rgba(58,46,36,0.7)', marginBottom: 4 }}>
+              <div style={{ fontSize: 14, color: 'rgba(58,46,36,0.7)', marginBottom: 4 }}>
                 {KIND_LABEL[kind]}可选：
               </div>
               <div className="card-deck">
@@ -114,15 +114,15 @@ export function SlotBoard({ villageId }: Props) {
                       onPointerDown={() => beginDrag({ kind: 'card', slot: kind, cardId: card.id })}
                       title={`${card.desc}${card.curse ? '（补贴诅咒：退坡时会暴雷）' : ''}；可拖到沙盘村庄落子，或点选入槽`}
                     >
-                      <b style={{ fontSize: 12 }}>{card.name}</b>
-                      {card.curse && <span style={{ color: 'var(--warn)', fontSize: 10, marginLeft: 4 }}>补贴诅咒</span>}
+                      <b style={{ fontSize: 14 }}>{card.name}</b>
+                      {card.curse && <span style={{ color: 'var(--warn)', fontSize: 12, marginLeft: 4 }}>补贴诅咒</span>}
                       <div className="cost">
                         {card.cost.cadre ? `精力${card.cost.cadre} ` : ''}
                         {card.cost.fiscal ? `财政${card.cost.fiscal} ` : ''}
                         {card.cost.coop ? `协作${card.cost.coop}` : ''}
                       </div>
                       {card.combo && card.combo.length > 0 && (
-                        <div style={{ fontSize: 10, color: 'var(--indigo)' }}>组合：与他卡搭配有加成</div>
+                        <div style={{ fontSize: 12, color: 'var(--indigo)' }}>组合：与他卡搭配有加成</div>
                       )}
                     </div>
                   );

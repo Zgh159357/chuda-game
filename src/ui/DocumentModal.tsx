@@ -48,14 +48,14 @@ export function DocumentModal({ fileId, forced }: Props) {
             {decided ? (
               <span className="stamp-mark">已批复：{decided}</span>
             ) : (
-              <span style={{ fontSize: 12, color: 'rgba(58,46,36,0.6)' }}>待批</span>
+              <span style={{ fontSize: 14, color: 'rgba(58,46,36,0.6)' }}>待批</span>
             )}
           </div>
         </div>
 
         <p style={{ lineHeight: 1.8 }}>{spec.body}</p>
 
-        <div className="redhead" style={{ fontSize: 13, marginTop: 14 }}>
+        <div className="redhead" style={{ fontSize: 15, marginTop: 14 }}>
           拟批复
         </div>
         {spec.options.map((opt) => {

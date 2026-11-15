@@ -41,7 +41,7 @@
       radial-gradient(ellipse at 20% 10%, rgba(255, 255, 255, 0.35), transparent 60%);
     color: var(--ink);
     font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif;
-    font-size: 14px;
+    font-size: 16px;
     line-height: 1.7;
   }
 
@@ -101,7 +101,7 @@
   /* 按钮：牛皮纸 + 墨线 */
   button {
     font-family: inherit;
-    font-size: 13px;
+    font-size: 15px;
     color: var(--ink);
     background: var(--paper);
     border: 1px solid var(--ink);
@@ -168,7 +168,7 @@
     border-left: 3px solid var(--seal);
     padding-left: 8px;
     margin: 6px 0;
-    font-size: 13px;
+    font-size: 15px;
   }
 
   /* 事件流 */
@@ -183,7 +183,7 @@
 
   .events .tag {
     display: inline-block;
-    font-size: 11px;
+    font-size: 13px;
     border: 1px solid var(--indigo);
     color: var(--indigo);
     border-radius: 2px;
@@ -270,7 +270,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 2px 10px;
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .meter {
@@ -310,7 +310,7 @@
   }
 
   .policy-card .cost {
-    font-size: 11px;
+    font-size: 13px;
     color: var(--warn);
   }
 
@@ -348,7 +348,7 @@
   }
 
   .action-row label {
-    font-size: 12px;
+    font-size: 14px;
     color: rgba(58, 46, 36, 0.75);
   }
 
@@ -398,7 +398,7 @@
     gap: 10px;
     border-bottom: 1px dashed var(--line);
     padding: 3px 0;
-    font-size: 13px;
+    font-size: 15px;
   }
 
   .report .ledger-line .kind {
@@ -509,7 +509,7 @@
     height: 20px;
     line-height: 17px;
     text-align: center;
-    font-size: 11px;
+    font-size: 13px;
     margin-right: 6px;
   }
 
@@ -546,7 +546,7 @@
 
   .slot-cell .slot-kind {
     font-family: 'KaiTi', 'STKaiti', cursive;
-    font-size: 11px;
+    font-size: 13px;
     color: var(--seal);
     letter-spacing: 2px;
   }
@@ -653,7 +653,7 @@
 
   .app-header .game-sub {
     font-family: 'KaiTi', 'STKaiti', cursive;
-    font-size: 14px;
+    font-size: 16px;
     color: var(--seal);
   }
 
@@ -665,7 +665,7 @@
     font-family: 'KaiTi', 'STKaiti', cursive;
     letter-spacing: 2px;
     transform: rotate(-1deg);
-    font-size: 13px;
+    font-size: 15px;
   }
 
   .map-view {
@@ -702,7 +702,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 13px;
+    font-size: 15px;
   }
 
   .stamina-bar .energy-dots {
@@ -726,7 +726,7 @@
     background: var(--seal);
     color: #f2e8d5;
     border: 1px solid var(--ink);
-    font-size: 14px;
+    font-size: 16px;
     padding: 6px 16px;
     letter-spacing: 2px;
   }
@@ -761,7 +761,7 @@
   }
 
   .sandbox-block h4 {
-    font-size: 13px;
+    font-size: 15px;
     color: var(--indigo);
     letter-spacing: 2px;
     margin-bottom: 6px;
@@ -789,6 +789,10 @@
   .game-shell {
     position: relative;
     min-height: 100vh;
+    /* §12：复古牛皮纸底色 + 老式台灯暗角 + 仿宋/宋体 */
+    background: #F2E8D5;
+    font-family: 'FangSong', 'SimSun', 'Noto Serif SC', serif;
+    box-shadow: inset 0 0 150px rgba(62, 46, 36, 0.8);
     filter: sepia(0.05) contrast(0.99);
   }
 
@@ -833,7 +837,7 @@
     margin-top: 6px;
     border-top: 1px dashed var(--line);
     border-bottom: 1px dashed var(--line);
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .info-view-tabs button,
@@ -842,7 +846,7 @@
     border: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.25);
     font-family: inherit;
-    font-size: 12px;
+    font-size: 14px;
     letter-spacing: 2px;
     color: var(--ink);
   }
@@ -948,7 +952,7 @@
     border: 1px solid var(--ink);
     box-shadow: 3px 4px 10px rgba(58, 46, 36, 0.4);
     padding: 6px 12px;
-    font-size: 13px;
+    font-size: 15px;
     letter-spacing: 2px;
     white-space: nowrap;
   }
@@ -1053,7 +1057,7 @@
   }
 
   .document-head .doc-no {
-    font-size: 12px;
+    font-size: 14px;
     color: rgba(58, 46, 36, 0.6);
   }
 
@@ -1088,7 +1092,7 @@
     height: 22px;
     line-height: 20px;
     text-align: center;
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .document-opt .opt-body {
@@ -1107,13 +1111,13 @@
 
   .document-opt .opt-cost {
     flex-shrink: 0;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--warn);
     white-space: nowrap;
   }
 
   .document-opt .opt-risk {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--seal);
     margin-top: 2px;
   }
@@ -1171,7 +1175,7 @@
   .paper-stack .stack-top .stack-note {
     display: block;
     color: var(--seal);
-    font-size: 11px;
+    font-size: 13px;
     margin-top: 2px;
   }
 
@@ -1221,7 +1225,7 @@
   }
 
   .negotiation-intro {
-    font-size: 13px;
+    font-size: 15px;
     color: rgba(58, 46, 36, 0.85);
     margin: 6px 0;
   }
@@ -1246,7 +1250,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
+    font-size: 13px;
     letter-spacing: 2px;
   }
 
@@ -1262,7 +1266,7 @@
     background: var(--paper-deep, #e9dcc2);
     border: 1.5px solid var(--ink);
     padding: 8px 10px;
-    font-size: 12px;
+    font-size: 14px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
@@ -1282,7 +1286,7 @@
 
   .hand-cost {
     color: var(--warn);
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .negotiation-actions {
@@ -1293,7 +1297,7 @@
   }
 
   .negotiate-btn {
-    font-size: 11px;
+    font-size: 13px;
     border: 1px dashed var(--seal);
     color: var(--seal);
     background: transparent;
@@ -1337,7 +1341,7 @@
     padding: 8px 10px;
     background: rgba(58, 46, 36, 0.06);
     border: 1px dashed var(--line);
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .chain-line {
@@ -1364,7 +1368,7 @@
 .tech-branch { margin-bottom: 10px; }
 .tech-branch h4 {
   font-family: var(--font-serif);
-  font-size: 13px;
+  font-size: 15px;
   color: var(--ink);
   border-bottom: 1px solid rgba(58,46,36,0.18);
   padding-bottom: 3px;
@@ -1380,7 +1384,7 @@
   padding: 6px 8px;
   margin-bottom: 5px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
 }
 .tech-node:hover:not(:disabled) { border-color: var(--seal); }
 .tech-node:disabled { cursor: default; }
@@ -1390,7 +1394,7 @@
 .tech-node.unlocked { border-color: var(--field); background: rgba(107,127,78,0.14); }
 .tech-name { display: block; font-weight: 600; color: var(--ink); }
 .tech-desc { display: block; color: rgba(58,46,36,0.72); margin-top: 2px; }
-.tech-cost { display: block; color: var(--seal); font-size: 11px; margin-top: 2px; }
+.tech-cost { display: block; color: var(--seal); font-size: 13px; margin-top: 2px; }
 
 .wonder-card {
   border: 1px solid rgba(58,46,36,0.3);
@@ -1401,17 +1405,17 @@
 }
 .wonder-card.built { border-color: var(--field); background: rgba(107,127,78,0.12); }
 .wonder-head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; flex-wrap: wrap; }
-.wonder-head b { font-size: 13px; color: var(--ink); }
-.wonder-progress { font-size: 11px; color: var(--seal); }
-.wonder-desc { font-size: 12px; color: rgba(58,46,36,0.8); margin: 3px 0; }
-.wonder-bonus { font-size: 12px; color: var(--indigo); margin: 2px 0; }
+.wonder-head b { font-size: 15px; color: var(--ink); }
+.wonder-progress { font-size: 13px; color: var(--seal); }
+.wonder-desc { font-size: 14px; color: rgba(58,46,36,0.8); margin: 3px 0; }
+.wonder-bonus { font-size: 14px; color: var(--indigo); margin: 2px 0; }
 .wonder-invest { margin-top: 4px; }
 .wonder-invest input {
   width: 120px;
   padding: 3px 6px;
   border: 1px solid rgba(58,46,36,0.4);
   background: #faf4e6;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .hero-card {
@@ -1422,15 +1426,15 @@
   background: rgba(242,232,213,0.6);
 }
 .hero-head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; flex-wrap: wrap; }
-.hero-head b { font-size: 13px; color: var(--ink); }
-.hero-role { font-size: 11px; color: var(--seal); }
-.hero-desc { font-size: 12px; color: rgba(58,46,36,0.8); margin: 3px 0; }
+.hero-head b { font-size: 15px; color: var(--ink); }
+.hero-role { font-size: 13px; color: var(--seal); }
+.hero-desc { font-size: 14px; color: rgba(58,46,36,0.8); margin: 3px 0; }
 .hero-assign { display: flex; gap: 8px; align-items: center; margin-top: 4px; flex-wrap: wrap; }
 .hero-assign select {
   padding: 2px 4px;
   border: 1px solid rgba(58,46,36,0.4);
   background: #faf4e6;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 /* 解锁光环：纸面印章光芒（不是霓虹） */
@@ -1476,8 +1480,8 @@
   100% { transform: rotate(-6deg) scale(1); }
 }
 .unlock-flash h2 { position: relative; margin: 0; font-size: 26px; color: var(--ink); }
-.unlock-flash p { position: relative; margin: 0; font-size: 14px; color: rgba(58,46,36,0.8); }
-.unlock-hint { position: relative; font-size: 12px; color: rgba(58,46,36,0.55); margin-top: 8px; }
+.unlock-flash p { position: relative; margin: 0; font-size: 16px; color: rgba(58,46,36,0.8); }
+.unlock-hint { position: relative; font-size: 14px; color: rgba(58,46,36,0.55); margin-top: 8px; }
 
 /* 沙盘奇观/脚手架/住房/货车 */
 .iso-wonder .iso-building-roof { filter: drop-shadow(0 0 2px rgba(179,58,43,0.4)); }
@@ -1509,7 +1513,7 @@
 .tech-penalty {
   display: block;
   color: var(--seal);
-  font-size: 11px;
+  font-size: 13px;
   margin-top: 2px;
 }
 
@@ -1546,7 +1550,7 @@
   padding: 5px 8px;
   margin-bottom: 4px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
 }
 .recruit-pending-item:hover { border-style: solid; }
 
@@ -1559,14 +1563,14 @@
   padding-left: 10px;
   margin: 8px 0;
 }
-.recruit-desc { font-size: 13px; color: rgba(58,46,36,0.85); }
+.recruit-desc { font-size: 15px; color: rgba(58,46,36,0.85); }
 .recruit-flaw { font-size: 12.5px; color: var(--seal); }
 .recruit-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
 .opt-id {
   font-family: var(--font-serif);
   font-weight: 700;
   color: var(--seal);
-  font-size: 13px;
+  font-size: 15px;
 }
 
 /* ===== 第十节：组织韧性 / 传帮带 / 底线防御 ===== */
@@ -1574,7 +1578,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--ink);
 }
 .resilience-track {
@@ -1637,7 +1641,7 @@
   letter-spacing: 0.2em;
 }
 .floor-defense-overlay .redhead-sub {
-  font-size: 11px;
+  font-size: 13px;
   color: rgba(58,46,36,0.55);
   margin-top: 4px;
 }
@@ -1681,7 +1685,7 @@
 }
 .mobile-hint button {
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: 14px;
   padding: 3px 10px;
   border: 1px solid var(--ink);
   background: rgba(242,232,213,0.9);

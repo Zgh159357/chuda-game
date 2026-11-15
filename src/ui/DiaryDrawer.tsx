@@ -36,10 +36,10 @@ export function DiaryDrawer({ state, onClose }: Props) {
         return (
           <section key={sl.id} style={{ margin: '14px 0' }}>
             <h4 style={{ borderBottom: '1px solid var(--line)', paddingBottom: 4 }}>
-              {sl.title} <span style={{ fontSize: 12, color: 'rgba(58,46,36,0.65)' }}>——{householdName(sl.householdId)}</span>
+              {sl.title} <span style={{ fontSize: 14, color: 'rgba(58,46,36,0.65)' }}>——{householdName(sl.householdId)}</span>
             </h4>
             {stageIndex === 0 ? (
-              <p style={{ fontSize: 13, color: 'rgba(58,46,36,0.6)' }}>档案袋里还没有他家的信。</p>
+              <p style={{ fontSize: 15, color: 'rgba(58,46,36,0.6)' }}>档案袋里还没有他家的信。</p>
             ) : (
               sl.stages.slice(0, stageIndex).map((st, i) => (
                 <blockquote

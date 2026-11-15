@@ -5,6 +5,7 @@
 import React from 'react';
 import type { GameState, VillageState } from '../core/types';
 import { config } from '../config';
+import { PaperPanel } from './PaperPanel';
 
 interface Props {
   state: GameState;
@@ -53,11 +54,14 @@ export function VillageRoster({ state, surveyVillages, onToggleSurvey, villageId
           const resident = residents.get(v.id);
           const toggled = surveyVillages.includes(v.id);
           return (
-            <div className="village-item" key={v.id}>
+            <PaperPanel key={v.id} className="mb-2">
               <h4>
                 {v.name}
+                <span className="stat" style={{ fontSize: 13 }}>
+                  {v.environment.terrain} · 灾害 {v.environment.disasterRisk}
+                </span>
                 {v.surveyed ? (
-                  <span className="stat" style={{ fontSize: 11 }}>
+                  <span className="stat" style={{ fontSize: 13 }}>
                     已摸排 · 精度 {Math.round(v.infoAccuracy)}
                   </span>
                 ) : (
@@ -73,7 +77,7 @@ export function VillageRoster({ state, surveyVillages, onToggleSurvey, villageId
                   治理护盾：{Math.round(v.governanceShield)}
                 </span>
               </div>
-              <div style={{ marginTop: 6, fontSize: 12 }}>
+              <div style={{ marginTop: 6, fontSize: 14 }}>
                 <span style={{ color: 'rgba(58,46,36,0.7)' }}>
                   {v.surveyed ? '在册户群：' : '户群底册：'}
                 </span>
@@ -87,13 +91,13 @@ export function VillageRoster({ state, surveyVillages, onToggleSurvey, villageId
                 <button className={toggled ? 'toggled' : ''} onClick={() => onToggleSurvey(v.id)} disabled={!v.surveyed && toggled}>
                   {v.surveyed ? (toggled ? '已安排复核' : '入户复核') : toggled ? '已安排摸排' : '入户摸排'}
                 </button>
-                <span style={{ fontSize: 11, color: 'rgba(58,46,36,0.65)' }}>
+                <span style={{ fontSize: 13, color: 'rgba(58,46,36,0.65)' }}>
                   {resident
                     ? `驻村干部：${state.cadres.find((c) => c.id === resident)?.name ?? ''}（摸排耗 2 精力）`
                     : '无驻村干部（摸排耗 3 精力）'}
                 </span>
               </div>
-            </div>
+            </PaperPanel>
           );
         })}
         <p className="note">

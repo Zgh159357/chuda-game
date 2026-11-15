@@ -29,6 +29,10 @@ export type CommitmentLevel = 'conservative' | 'standard' | 'overachieve';
 export type CoopType = 'ablePerson' | 'partyBranch' | 'enterprise' | 'retail';
 export type PlayerAnchor = 'returningStudent' | 'entrusted' | 'local'; // P1 开局三选一
 
+// ===== §12 玩家初始身份（主控提示词：环境与人文阻力） =====
+/** 身份三类：返乡大学生 / 退伍军人 / 空降干部。由 PlayerAnchor 映射（见 core/calculations.ts originOf） */
+export type PlayerOrigin = 'origin_student' | 'origin_veteran' | 'origin_airdrop';
+
 // ===== 政策卡槽（重构：党建 / 产业 / 民生） =====
 export type SlotKind = 'party' | 'industry' | 'livelihood';
 export const SLOT_LABELS: Record<SlotKind, string> = {
@@ -63,13 +67,81 @@ export interface ZoningAction {
 }
 
 // ===== 物流网络与产业链（Logistics） =====
+// ===== §12 地块环境特征（自然环境与人文环境阻力） =====
+export type Terrain = '深山' | '石漠化' | '平原' | '丘陵';
+
+export interface EnvironmentTraits {
+  terrain: Terrain;
+  disasterRisk: number; // 灾害风险 0-100
+  clanPower: number; // 宗族势力 0-100
+  traditionalIdeology: number; // 传统观念阻力 0-100
+}
+
+/** 建筑/项目类型（版画沙盘渲染与产出修正用） */
+export type BuildingType = '茅草屋' | '砖瓦房' | '大棚' | '加工厂' | 'wonder_bridge' | 'wonder_relocation';
+
 /** 沙盘地块（派生类型，不持久化：由 state 纯函数计算，UI/store 每次重绘） */
 export interface Tile {
+  id: string; // `${x},${y}`
   x: number;
   y: number;
+  villageId: string | null; // 所属村（县治/安置点/荒野为 null）
+  environment: EnvironmentTraits; // 地块环境特征（村庄格取该村环境，其余取默认平原）
+  building: BuildingType | null; // 已建成建筑（由项目/奇观派生）
+  infoAccuracy: number; // 信息精度 0-100（村庄格取村精度，其余 100）
   road: boolean; // 道路连通性（村/县/安置点格通公路，规划区可延伸机耕道）
   logisticsCovered: boolean; // 物流覆盖（县物流站建成后，通公路的格即被覆盖）
   zoningKind: ZoningKind | null; // 已规划用途
+  hasWonder?: 'wonder_bridge' | 'wonder_relocation' | 'wonder_modern_agri' | null; // 该格奇观
+  wonderProgress?: number; // 奇观建造进度 0-100（未建 0，建成 100）
+}
+
+// ===== §13 高自由度沙盒与动态事件池（主控提示词：创造力引擎） =====
+/** 产业链节点类型（自由拼装：农田→加工厂→物流站→市场） */
+export type NodeType = 'farm' | 'factory' | 'logistics' | 'market';
+
+/** 村庄动态头衔：由玩家建设组合自动生成（如「农旅融合村」） */
+export interface VillageTitle {
+  id: string;
+  name: string;
+  condition: string; // 条件表达式描述，如 "farm>=1&market>=1&terrain=深山"
+  globalBuff: Record<string, number>; // 给全县带来的加成
+}
+
+/** 状态校验条件（动态事件入池判定） */
+export interface EventCondition {
+  target: 'global' | 'village' | 'cadre';
+  metric: string; // 'fiscalFund' | 'avgFatigue' | 'clanPower' | 'traditionalIdeology' 等
+  operator: '<' | '>' | '==' | '<=' | '>=';
+  value: number;
+}
+
+/** 动态事件分类 */
+export type DynamicEventCategory = 'crisis' | 'opportunity' | 'routine' | 'black_swan';
+
+/**
+ * 动态事件配置（条件驱动 + 权重随机；替代固定回合触发）。
+ * 与 GameEvent（结算产生的事件记录）不同：GameEventConfig 是策划配置表。
+ */
+export interface GameEventConfig {
+  id: string;
+  title: string;
+  description: string;
+  category: DynamicEventCategory;
+  conditions: EventCondition[]; // 必须同时满足才进入本回合抽奖池
+  weight: number; // 权重（轮盘赌抽中概率）
+  cooldownTurns?: number; // 触发后的冷却回合
+  targetVillage?: boolean; // true=村庄目标：任一村庄满足即可触发（记录触发村 id）
+  effectsOnAccept: Record<string, number>;
+  effectsOnDecline: Record<string, number>;
+  delayedEventOnAccept?: string; // 连锁事件：接受后向未来卡池注入的事件 id（如瞒报→暗访）
+  delayedEventOnDecline?: string; // 连锁事件：拒绝后注入
+}
+
+/** 抽奖结果（配置 + 命中村庄；村庄事件才有 villageId） */
+export interface RolledEvent {
+  config: GameEventConfig;
+  villageId?: string;
 }
 
 // ===== 干部特质（Cadre Traits） =====
@@ -340,6 +412,7 @@ export interface CountyState {
 export interface VillageState {
   id: string;
   name: string;
+  environment: EnvironmentTraits; // §12 地块环境特征（地形/灾害风险/宗族/传统观念）
   infoAccuracy: number; // 0-100
   externalEmbed: number; // 外部嵌入 0-100
   internalGovernance: number; // 内生治理 0-100

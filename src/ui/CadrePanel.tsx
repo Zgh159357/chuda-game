@@ -48,36 +48,36 @@ export function CadrePanel({ state, assignments, onAssign, draggable }: Props) {
             >
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                 <b style={{ fontFamily: "'Songti SC', 'SimSun', serif", fontSize: 15 }}>{c.name}</b>
-                <span style={{ fontSize: 12, color: 'rgba(58,46,36,0.7)' }}>
+                <span style={{ fontSize: 14, color: 'rgba(58,46,36,0.7)' }}>
                   {TITLE_SUFFIX[c.title]} · {c.homeUnitId === 'u_agri' ? '县农业局' : c.homeUnitId === 'u_health' ? '县卫健局' : '东部协作单位'}
                 </span>
                 {c.fatigue >= 80 && <span className="stamp">过劳边缘</span>}
               </div>
 
               <div className="meter" style={{ margin: '4px 0' }}>
-                <span style={{ fontSize: 12, width: 30 }}>精力</span>
+                <span style={{ fontSize: 14, width: 30 }}>精力</span>
                 <div className="energy-dots" style={{ flex: 1 }}>
                   {Array.from({ length: 10 }, (_, i) => (
                     <i key={i} className={i < c.energy ? '' : c.energy === 0 ? 'drained' : 'empty'} />
                   ))}
                 </div>
-                <b style={{ fontSize: 12, width: 20, textAlign: 'right' }}>{c.energy}</b>
+                <b style={{ fontSize: 14, width: 20, textAlign: 'right' }}>{c.energy}</b>
               </div>
 
               <div className="meter" style={{ margin: '3px 0' }}>
-                <span style={{ fontSize: 12, width: 30 }}>士气</span>
+                <span style={{ fontSize: 14, width: 30 }}>士气</span>
                 <div className="bar">
                   <div className="fill" style={{ width: `${c.morale}%`, background: c.morale < 40 ? 'var(--seal)' : 'var(--field)' }} />
                 </div>
-                <b style={{ fontSize: 12, width: 20, textAlign: 'right' }}>{c.morale}</b>
+                <b style={{ fontSize: 14, width: 20, textAlign: 'right' }}>{c.morale}</b>
               </div>
 
               <div className="meter" style={{ margin: '3px 0' }}>
-                <span style={{ fontSize: 12, width: 30 }}>疲劳</span>
+                <span style={{ fontSize: 14, width: 30 }}>疲劳</span>
                 <div className="bar">
                   <div className="fill" style={{ width: `${c.fatigue}%`, background: c.fatigue >= 80 ? 'var(--seal)' : 'var(--warn)' }} />
                 </div>
-                <b style={{ fontSize: 12, width: 20, textAlign: 'right' }}>{c.fatigue}</b>
+                <b style={{ fontSize: 14, width: 20, textAlign: 'right' }}>{c.fatigue}</b>
               </div>
 
               <div style={{ marginTop: 6 }}>
@@ -93,7 +93,7 @@ export function CadrePanel({ state, assignments, onAssign, draggable }: Props) {
                     })}
                   </div>
                 )}
-                <label style={{ fontSize: 12, color: 'rgba(58,46,36,0.7)' }}>驻村安排（换岗耗 1 精力）：</label>
+                <label style={{ fontSize: 14, color: 'rgba(58,46,36,0.7)' }}>驻村安排（换岗耗 1 精力）：</label>
                 <select
                   value={assigned ?? ''}
                   onChange={(e) => onAssign(c.id, e.target.value === '' ? null : e.target.value)}
