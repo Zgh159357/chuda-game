@@ -1,6 +1,7 @@
 import React from 'react';
 import type { RoundOutcome } from '../core/types';
 import { config } from '../config';
+import { synergyRecipes } from '../config/industry';
 import { starLabel } from '../core/settlement/stars';
 
 const EVENT_TAGS: Record<string, { text: string; cls: string }> = {
@@ -37,6 +38,7 @@ const EVENT_TAGS: Record<string, { text: string; cls: string }> = {
   floorDefense: { text: '底线防御', cls: 'bad' },
   resilienceAbsorbed: { text: '韧性缓冲', cls: 'warn' },
   governanceShieldAbsorbed: { text: '治理护盾', cls: 'good' },
+  synergyUnlocked: { text: '流派解锁', cls: 'good' },
 };
 
 function eventText(outcome: RoundOutcome, e: RoundOutcome['events'][number]): string {
@@ -145,6 +147,11 @@ function eventText(outcome: RoundOutcome, e: RoundOutcome['events'][number]): st
     case 'governanceShieldAbsorbed': {
       const v = outcome.state.villages.find((x) => x.id === e.villageId);
       return `${v?.name ?? e.villageId} 的治理护盾吸收了 ${e.amount} 点冲击，村两委没有伤到。`;
+    }
+    case 'synergyUnlocked': {
+      const v = outcome.state.villages.find((x) => x.id === e.villageId);
+      const recipe = synergyRecipes.find((r) => r.id === e.recipeId);
+      return `${v?.name ?? e.villageId} 炼出了「${recipe?.unlockVillageTitle ?? e.recipeId}」——${recipe?.specialEffectDesc ?? ''}`;
     }
     default:
       return '';

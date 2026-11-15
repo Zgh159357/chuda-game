@@ -36,6 +36,8 @@ export const text: Record<string, string> = {
   mf_slot_full_text: '党建、产业、民生三张牌都打出去了。这一轮的调度有章法。',
   mf_clean_desk: '案头清爽',
   mf_clean_desk_text: '迎检的文件堆清空了，桌面露出木纹，隔壁打水的声音都听得见了。',
+  mf_synergy: '炼出了流派',
+  mf_synergy_text: '几样不起眼的东西凑在一起，突然就成了气候。',
   tech_unlock_text: '新的治理机制落了章，全县的工作方式都跟着变。',
   wonder_done_text: '工程落成了。地图上多了一处谁都能看见的东西。',
   hero_awaken_text: '走访时发现了一个能人。他本来就在村里，只是之前没人张罗。',

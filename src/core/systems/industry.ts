@@ -5,6 +5,7 @@ import { techSum, techPenaltySum } from './techTree';
 import { wonderSum } from './wonders';
 import { heroSum, flawSum } from './heroes';
 import { shieldDamage } from './governance';
+import { synergyMulOf, hasSynergy } from './synergy';
 import type { TurnCtx } from './context';
 
 // ============================================================
@@ -94,6 +95,7 @@ export function settleIndustry(state: GameState, ctx: TurnCtx): void {
       effect *= projectMul; // 项目运营技能 + 机制树：项目效果加成
       effect *= (1 + heroSum(state, v.id, 'agriYield')) * noTech; // 人才 + 毒点（拒现代农业）
       effect *= v.industryOutputMul ?? 1; // §10 传帮带当回合：产业产出 ×0.7
+      effect *= synergyMulOf(state, v.id); // §14 涌现式融合流派：产出倍率
       if (p.status === 'recovered') effect *= 0.8; // 修复后打折起步
       effect = Math.max(0, effect);
 
@@ -140,6 +142,26 @@ export function settleIndustry(state: GameState, ctx: TurnCtx): void {
 
     if (roundOutput > 0) {
       ctx.noteCombo('solid');
+    }
+
+    // §14 农旅融合的代价：游客自己走进来，也把风险带进来（泥石流/灾害 ×1.5）
+    if (hasSynergy(state, v.id, 'recipe_agri_tourism') && ctx.rng() < config.balance.industryDisasterChance * 1.5) {
+      let hit = false;
+      for (const pid of v.projects) {
+        const p = state.projects.find((x) => x.id === pid);
+        if (p && p.status === 'active') {
+          p.status = 'stalled';
+          p.failureRound = ctx.round;
+          hit = true;
+        }
+      }
+      if (hit) {
+        state.projectFailures.push({ projectId: `tourism_${v.id}`, round: ctx.round });
+        ctx.pushEvent({ type: 'industryDisaster', round: ctx.round, textId: 'industry_disaster_text' });
+        ctx.pushLedger('cost', `tourism_${v.id}`, -6, '游客潮带来的灾害冲击');
+        const real = shieldDamage(state, v.id, 2, ctx);
+        v.internalGovernance = Math.max(0, v.internalGovernance - real);
+      }
     }
   }
 }

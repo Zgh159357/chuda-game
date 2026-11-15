@@ -68,6 +68,34 @@ export const dynamicEvents: GameEventConfig[] = [
     effectsOnAccept: { fiscalFund: 5, industryChannel: 4, trust: 2 }, // 组织消费帮扶
     effectsOnDecline: { returnRisk: 3 }, // 山货烂在手里
   },
+  {
+    // §14 头衔联动（农旅融合）：机遇——百万粉博主打卡
+    id: 'ev_influencer_visit',
+    title: '百万粉博主进村了',
+    description: '一位旅游博主扛着相机进村拍「宝藏古村」，视频还没剪完，评论区已经有人在问路线了。',
+    category: 'opportunity',
+    conditions: [],
+    weight: 35,
+    cooldownTurns: 10,
+    targetVillage: true,
+    requiredSynergyTitle: 'recipe_agri_tourism',
+    effectsOnAccept: { fiscalFund: 20, trust: 8, industryChannel: 10 }, // 借势宣传，客流变现
+    effectsOnDecline: { trust: -2 }, // 把博主请走了，村民议论纷纷
+  },
+  {
+    // §14 头衔联动（农旅融合）：危机——垃圾围村
+    id: 'ev_garbage_crisis',
+    title: '游客走后，垃圾围了村',
+    description: '人流带来生意，也带来满地包装袋。村口的垃圾池三天就满了，苍蝇乱飞，老人坐在门口直叹气。',
+    category: 'crisis',
+    conditions: [],
+    weight: 30,
+    cooldownTurns: 12,
+    targetVillage: true,
+    requiredSynergyTitle: 'recipe_agri_tourism',
+    effectsOnAccept: { fiscalFund: -15, ecology: 10, trust: 4 }, // 紧急建环保设施
+    effectsOnDecline: { trust: -8, returnRisk: 6 }, // 视而不见，口碑崩坏
+  },
 ];
 
 /** 连锁事件（延迟爆发）：由 ev_swan_rumor 拒绝时注入 */

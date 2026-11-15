@@ -5,6 +5,7 @@
 import React from 'react';
 import type { CoopType, GameState, MeasureId, PovertyTag } from '../core/types';
 import { config } from '../config';
+import { synergyRecipes } from '../config/industry';
 import { useGame } from './store';
 
 const MEASURE_NAMES: Record<MeasureId, string> = {
@@ -77,6 +78,18 @@ export function VillageSandbox({ villageId }: { villageId: string }) {
             <span style={{ fontSize: 14, color: 'var(--indigo)' }}>
               本回合指派的施政方针：{assignedCards.map((x) => x?.name).join('、')}
             </span>
+          </div>
+        )}
+        {village.synergyTitles.length > 0 && (
+          <div className="synergy-stamps" style={{ marginBottom: 8 }}>
+            {village.synergyTitles.map((rid) => {
+              const recipe = synergyRecipes.find((r) => r.id === rid);
+              return recipe ? (
+                <span key={rid} className="synergy-stamp" title={recipe.specialEffectDesc}>
+                  {recipe.unlockVillageTitle}
+                </span>
+              ) : null;
+            })}
           </div>
         )}
 

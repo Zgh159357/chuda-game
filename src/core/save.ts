@@ -15,9 +15,9 @@ import { makeCadres } from '../config/world';
 // v9（治理护盾）：新增村级治理护盾，v8 存档自动迁移。
 // ============================================================
 
-const STORAGE_KEY = 'chuda.save.v11';
-const LEGACY_KEYS = ['chuda.save.v10', 'chuda.save.v9', 'chuda.save.v8', 'chuda.save.v7', 'chuda.save.v6', 'chuda.save.v5', 'chuda.save.v4', 'chuda.save.v3', 'chuda.save.v2', 'chuda.save.v1'];
-export const SAVE_VERSION = 11;
+const STORAGE_KEY = 'chuda.save.v12';
+const LEGACY_KEYS = ['chuda.save.v11', 'chuda.save.v10', 'chuda.save.v9', 'chuda.save.v8', 'chuda.save.v7', 'chuda.save.v6', 'chuda.save.v5', 'chuda.save.v4', 'chuda.save.v3', 'chuda.save.v2', 'chuda.save.v1'];
+export const SAVE_VERSION = 12;
 
 export function serialize(state: GameState): string {
   return JSON.stringify(state);
@@ -142,6 +142,13 @@ function migrateV10(data: GameState): void {
   }
 }
 
+/** v11 → v12：补涌现式融合流派头衔（synergyTitles，§14 第二批） */
+function migrateV11(data: GameState): void {
+  for (const v of data.villages) {
+    if (!Array.isArray(v.synergyTitles)) v.synergyTitles = [];
+  }
+}
+
 export function deserialize(json: string): GameState {
   const data = JSON.parse(json) as GameState;
   if (data.version === 1) {
@@ -182,6 +189,10 @@ export function deserialize(json: string): GameState {
   }
   if (data.version === 10) {
     migrateV10(data);
+    data.version = 11;
+  }
+  if (data.version === 11) {
+    migrateV11(data);
     data.version = SAVE_VERSION;
   }
   if (data.version !== SAVE_VERSION) {

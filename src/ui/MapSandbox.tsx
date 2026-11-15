@@ -87,6 +87,7 @@ export function MapSandbox() {
   const setZoningMode = useGame((s) => s.setZoningMode);
   const infoView = useGame((s) => s.infoView);
   const setInfoView = useGame((s) => s.setInfoView);
+  const synergyFlash = useGame((s) => s.synergyFlash);
 
   if (!state) return null;
 
@@ -507,6 +508,24 @@ export function MapSandbox() {
             </text>
           );
         })}
+
+        {synergyFlash && state.villages.some((v) => v.id === synergyFlash.villageId) && (
+          <g key={`synergy_line_${synergyFlash.recipeId}`}>
+            <line
+              className="synergy-line"
+              x1={iso(COUNTY_CELL[0] + 0.5, COUNTY_CELL[1] + 0.5)[0] + TX}
+              y1={iso(COUNTY_CELL[0] + 0.5, COUNTY_CELL[1] + 0.5)[1] + TY}
+              x2={iso(
+                (VILLAGE_CELLS[synergyFlash.villageId as keyof typeof VILLAGE_CELLS] ?? COUNTY_CELL)[0] + 0.5,
+                (VILLAGE_CELLS[synergyFlash.villageId as keyof typeof VILLAGE_CELLS] ?? COUNTY_CELL)[1] + 0.5
+              )[0] + TX}
+              y2={iso(
+                (VILLAGE_CELLS[synergyFlash.villageId as keyof typeof VILLAGE_CELLS] ?? COUNTY_CELL)[0] + 0.5,
+                (VILLAGE_CELLS[synergyFlash.villageId as keyof typeof VILLAGE_CELLS] ?? COUNTY_CELL)[1] + 0.5
+              )[1] + TY}
+            />
+          </g>
+        )}
 
         {state.sites.map((s) => {
           const [cx, cy] = SITE_CELLS[s.id] ?? COUNTY_CELL;

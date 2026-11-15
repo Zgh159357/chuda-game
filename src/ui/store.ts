@@ -137,6 +137,7 @@ interface GameStore {
 
   // 组织韧性（主控提示词第十节）—— UI 态
   floorDefenseFlash: { villageId: string } | null; // 底线防御触发后，报告关闭后闪红头文件
+  synergyFlash: { villageId: string; recipeId: string } | null; // §14 流派解锁后闪金线+牌匾（报告关闭后）
 
   // 存档导入/导出（部署任务）—— UI 态
   importError: string | null; // 导入失败时的错误文案（StartScene 显示）
@@ -189,6 +190,7 @@ interface GameStore {
 
   toggleMentorship: (villageId: string) => void; // 传帮带指令：勾选/取消本回合驻村村
   clearFloorDefenseFlash: () => void;
+  clearSynergyFlash: () => void;
 
   getBlockingFileId: () => string | null;
   endTurn: () => void;
@@ -221,6 +223,7 @@ export const useGame = create<GameStore>((set, get) => ({
   unlockFlash: null,
   openRecruitId: null,
   floorDefenseFlash: null,
+  synergyFlash: null,
   importError: null,
 
   startNew: (anchor, length) => {
@@ -248,6 +251,7 @@ export const useGame = create<GameStore>((set, get) => ({
       unlockFlash: null,
       openRecruitId: null,
       floorDefenseFlash: null,
+      synergyFlash: null,
     });
   },
 
@@ -280,6 +284,7 @@ export const useGame = create<GameStore>((set, get) => ({
       unlockFlash: null,
       openRecruitId: null,
       floorDefenseFlash: null,
+      synergyFlash: null,
     });
   },
 
@@ -516,6 +521,7 @@ export const useGame = create<GameStore>((set, get) => ({
   },
 
   clearFloorDefenseFlash: () => set({ floorDefenseFlash: null }),
+  clearSynergyFlash: () => set({ synergyFlash: null }),
 
   exportSave: () => {
     const { state } = get();
@@ -651,6 +657,12 @@ export const useGame = create<GameStore>((set, get) => ({
     const fdEvent = outcome.events.find((e) => e.type === 'floorDefense');
     const floorDefenseFlash =
       fdEvent && 'villageId' in fdEvent ? { villageId: fdEvent.villageId } : null;
+    // §14 流派解锁：本回合炼出新流派 → 报告关闭后闪金线+牌匾
+    const syEvent = outcome.events.find((e) => e.type === 'synergyUnlocked');
+    const synergyFlash =
+      syEvent && 'villageId' in syEvent && 'recipeId' in syEvent
+        ? { villageId: syEvent.villageId, recipeId: syEvent.recipeId }
+        : null;
     set({
       state: outcome.state,
       report: outcome,
@@ -672,6 +684,7 @@ export const useGame = create<GameStore>((set, get) => ({
       unlockFlash,
       openRecruitId: null,
       floorDefenseFlash,
+      synergyFlash,
     });
   },
 
@@ -696,5 +709,6 @@ export const useGame = create<GameStore>((set, get) => ({
       unlockFlash: null,
       openRecruitId: null,
       floorDefenseFlash: null,
+      synergyFlash: null,
     }),
 }));

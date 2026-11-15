@@ -133,6 +133,7 @@ export interface GameEventConfig {
   weight: number; // 权重（轮盘赌抽中概率）
   cooldownTurns?: number; // 触发后的冷却回合
   targetVillage?: boolean; // true=村庄目标：任一村庄满足即可触发（记录触发村 id）
+  requiredSynergyTitle?: string; // §14 头衔联动：仅已解锁该融合配方（recipeId）的村庄可触发
   effectsOnAccept: Record<string, number>;
   effectsOnDecline: Record<string, number>;
   delayedEventOnAccept?: string; // 连锁事件：接受后向未来卡池注入的事件 id（如瞒报→暗访）
@@ -463,6 +464,7 @@ export interface VillageState {
   projects: string[]; // 项目 id
   industryOutputMul: number; // §10 产业产出乘数（传帮带当回合 =0.7，结算后复位 1）
   governanceShield: number; // §11 治理护盾：按驻村干部数每回合生成，负面事件优先扣护盾
+  synergyTitles: string[]; // §14 已解锁的融合配方 id（如 recipe_se_agri）；头衔=配方.unlockVillageTitle
 }
 
 // ===== 户群 =====
@@ -715,7 +717,8 @@ export type GameEvent =
   | CadreSlackEvent
   | FloorDefenseEvent
   | ResilienceAbsorbedEvent
-  | GovernanceShieldAbsorbedEvent;
+  | GovernanceShieldAbsorbedEvent
+  | SynergyUnlockedEvent;
 
 export interface CohesionRiotEvent {
   type: 'cohesionRiot';
@@ -815,6 +818,12 @@ export interface GovernanceShieldAbsorbedEvent {
   round: Round;
   villageId: string;
   amount: number;
+}
+export interface SynergyUnlockedEvent {
+  type: 'synergyUnlocked'; // §14 涌现式产业融合：村庄炼出流派配方
+  round: Round;
+  villageId: string;
+  recipeId: string;
 }
 
 // ===== 大考 / 失败 / 结局 =====

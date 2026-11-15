@@ -1663,6 +1663,106 @@
   color: var(--seal);
 }
 
+/* ===== §14 涌现式融合：金线 / 牌匾 / 头衔章 ===== */
+.synergy-line {
+  stroke: #b8860b;
+  stroke-width: 2.5;
+  stroke-dasharray: 6 4;
+  animation: synergy-dash 1.2s linear infinite;
+  opacity: 0.9;
+}
+@keyframes synergy-dash {
+  to { stroke-dashoffset: -20; }
+}
+.synergy-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(58,46,36,0.55);
+  cursor: pointer;
+}
+.synergy-plaque {
+  position: relative;
+  min-width: min(420px, 86vw);
+  padding: 26px 30px 20px;
+  background:
+    radial-gradient(ellipse at center, #f7efdc 0%, #efe2c2 100%);
+  border: 3px solid #b8860b;
+  outline: 1px solid rgba(184,134,11,0.5);
+  outline-offset: 4px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+  text-align: center;
+  animation: plaque-thud 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+@keyframes plaque-thud {
+  0% { transform: scale(0.7); opacity: 0; }
+  60% { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.synergy-plaque-head {
+  font-size: 13px;
+  letter-spacing: 4px;
+  color: var(--ink);
+  opacity: 0.75;
+}
+.synergy-plaque-title {
+  margin: 10px 0 4px;
+  font-family: 'FangSong','KaiTi',serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--seal);
+  letter-spacing: 6px;
+}
+.synergy-plaque-name {
+  font-size: 15px;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+.synergy-plaque-desc {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--ink);
+  opacity: 0.85;
+  margin-bottom: 16px;
+}
+.synergy-plaque-seal {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 2px solid var(--seal);
+  border-radius: 4px;
+  color: var(--seal);
+  font-family: 'Kaiti SC','KaiTi',serif;
+  font-size: 18px;
+  transform: rotate(-6deg);
+  letter-spacing: 4px;
+}
+.synergy-plaque-hint {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--ink);
+  opacity: 0.55;
+}
+.synergy-stamps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.synergy-stamp {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1.5px solid #b8860b;
+  border-radius: 3px;
+  color: #8a6407;
+  background: rgba(184,134,11,0.08);
+  font-family: 'Kaiti SC','KaiTi',serif;
+  font-size: 13px;
+  letter-spacing: 1px;
+  transform: rotate(-1.5deg);
+}
+
 /* ===== 部署：移动端提示浮窗 ===== */
 .mobile-hint {
   position: fixed;

@@ -95,6 +95,18 @@ export function conditionsMet(
   ev: GameEventConfig,
   villageId?: string
 ): { ok: boolean; villageId?: string } {
+  // §14 头衔联动：仅已解锁指定融合配方的村庄可触发
+  if (ev.requiredSynergyTitle) {
+    const match = (id: string) => {
+      const v = state.villages.find((x) => x.id === id);
+      return !!v && v.synergyTitles.includes(ev.requiredSynergyTitle!);
+    };
+    if (villageId) return match(villageId) ? { ok: true, villageId } : { ok: false };
+    for (const v of state.villages) {
+      if (match(v.id)) return { ok: true, villageId: v.id };
+    }
+    return { ok: false };
+  }
   if (ev.conditions.length === 0) return { ok: true, villageId };
   const villageConds = ev.conditions.filter((c) => c.target === 'village');
   const restConds = ev.conditions.filter((c) => c.target !== 'village');

@@ -1,4 +1,6 @@
-import type { IndustryNode, IndustryTag, ResourceTag, SynergyRecipe, Tile } from '../types';
+import type { GameState, IndustryNode, IndustryTag, ResourceTag, SynergyRecipe, Tile } from '../types';
+import { deriveIndustryNodes, synergyRecipes } from '../../config/industry';
+import { deriveTiles } from './logistics';
 
 // ============================================================
 // §14 产业融合引擎（要素标签化 + 涌现式玩法）
@@ -15,6 +17,19 @@ function hasAll<T>(owned: T[], required: T[]): boolean {
   return required.every((r) => owned.includes(r));
 }
 
+/** 单配方命中判定（calculateSynergy 与 detectVillageSynergies 共用） */
+function matchesRecipe(
+  tile: Tile,
+  industryTags: IndustryTag[],
+  recipe: SynergyRecipe
+): boolean {
+  const tileResources: ResourceTag[] = normalizeTags(tile.environment.resources ?? []);
+  const resourceOk = hasAll(tileResources, recipe.requiredResourceTags);
+  const industryOk = hasAll(industryTags, recipe.requiredIndustryTags);
+  const terrainOk = !recipe.requiredTerrain || tile.environment.terrain === recipe.requiredTerrain;
+  return resourceOk && industryOk && terrainOk;
+}
+
 /**
  * 涌现式产业融合计算。
  * - 地块资源：tile.environment.resources
@@ -26,20 +41,29 @@ export function calculateSynergy(
   surroundingNodes: IndustryNode[],
   recipes: SynergyRecipe[]
 ): SynergyRecipe | null {
-  const tileResources: ResourceTag[] = normalizeTags(tile.environment.resources ?? []);
   const industryTags: IndustryTag[] = normalizeTags(
     surroundingNodes.flatMap((n) => n.tags)
   );
-
   for (const recipe of recipes) {
-    const resourceOk = hasAll(tileResources, recipe.requiredResourceTags);
-    const industryOk = hasAll(industryTags, recipe.requiredIndustryTags);
-    const terrainOk = !recipe.requiredTerrain || tile.environment.terrain === recipe.requiredTerrain;
-    if (resourceOk && industryOk && terrainOk) {
-      return recipe;
-    }
+    if (matchesRecipe(tile, industryTags, recipe)) return recipe;
   }
   return null;
+}
+
+/**
+ * 村庄涌现式融合检测：该村地块（资源标签）+ 本村运营中的产业项目（产业标签）。
+ * 返回所有命中的配方（可同时解锁多条流派）。
+ */
+export function detectVillageSynergies(state: GameState, villageId: string): SynergyRecipe[] {
+  const tile = deriveTiles(state).find((t) => t.villageId === villageId);
+  if (!tile) return [];
+  const villageProjects = state.projects.filter(
+    (p) => p.villageId === villageId && (p.status === 'active' || p.status === 'recovered')
+  );
+  if (villageProjects.length === 0) return [];
+  const nodes = deriveIndustryNodes(villageProjects);
+  const industryTags: IndustryTag[] = normalizeTags(nodes.flatMap((n) => n.tags));
+  return synergyRecipes.filter((r) => matchesRecipe(tile, industryTags, r));
 }
 
 /**

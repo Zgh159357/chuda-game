@@ -17,6 +17,7 @@ import { RecruitModal } from './RecruitModal';
 import { FloorDefenseOverlay } from './FloorDefenseOverlay';
 import { MobileHint } from './MobileHint';
 import { UnlockFlash } from './UnlockFlash';
+import SynergyFlash from './SynergyFlash';
 import { RoundReport } from './RoundReport';
 import { EndScreen } from './EndScreen';
 
@@ -72,6 +73,7 @@ export function App() {
       <RecruitModal />
       <FloorDefenseOverlay />
       <UnlockFlash />
+      <SynergyFlash />
       {report && <RoundReport outcome={report} onClose={closeReport} />}
     </div>
   );
