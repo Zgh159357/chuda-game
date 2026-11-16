@@ -1,6 +1,7 @@
 import type { GameState, PlayerAnchor, Round } from '../types';
 import { config } from '../../config';
 import { makeCadres, makeProjects, makeRelationships, makeSites, makeUnits, makeVillages } from '../../config/world';
+import { chainMasterCatalog, INITIAL_INFRA } from '../../config/economy';
 
 // ============================================================
 // 初始状态工厂（P1：玩家身份锚点三选一）
@@ -32,7 +33,7 @@ export function createInitialState(seed: number, anchor: PlayerAnchor): GameStat
   }
 
   return {
-    version: 13,
+    version: 14,
     seed,
     status: 'running',
     anchor,
@@ -118,5 +119,9 @@ export function createInitialState(seed: number, anchor: PlayerAnchor): GameStat
     pendingRecruits: [],
     declinedRecruits: [],
     builtNodes: [], // §15 自建产业设施
+    chainMasters: chainMasterCatalog.map((c) => ({ ...c, isPresent: false, subsidyPaid: 0 })), // §16
+    enclaves: [], // §16 飞地抱团
+    distributionContracts: {}, // §16 各村分红契约（缺省=口头约定）
+    physicalInfra: { ...INITIAL_INFRA }, // §16 冷链与数字化错位
   };
 }

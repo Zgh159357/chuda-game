@@ -33,6 +33,10 @@ export function CountyDesk() {
   const draft = useGame((s) => s.draft);
   const updateDraft = useGame((s) => s.updateDraft);
   if (!state) return null;
+  const infra = state.physicalInfra;
+  const eco = config.balance.economy;
+  const idleHigh = infra.coldChainIdleRate > eco.idleRatePenaltyThreshold;
+  const appLow = infra.hasSmartAgriApp && infra.appAdoptionRate < eco.appAdoptionThreshold;
   const c = state.county;
 
   const unitName = (id: string | null) => {
@@ -230,6 +234,30 @@ export function CountyDesk() {
             );
           })}
           <p className="note">三条线全满需 12 点，务必取舍。撤队交接时按组织建设线留下治理遗产。</p>
+        </div>
+
+        {/* §16 物理基础设施（漏损与数字化错位） */}
+        <div style={{ marginTop: 10 }}>
+          <label style={{ fontSize: 14, color: 'rgba(58,46,36,0.75)' }}>物理基础设施：</label>
+          <div style={{ fontSize: 13.5, marginTop: 4, color: 'rgba(58,46,36,0.8)' }}>
+            <span style={idleHigh ? { color: 'var(--seal)' } : undefined}>
+              冷链库容 {infra.coldChainCapacity}
+            </span>
+            <span style={{ margin: '0 8px' }}>·</span>
+            <span style={idleHigh ? { color: 'var(--seal)' } : undefined}>
+              空置率 {Math.round(infra.coldChainIdleRate * 100)}%{idleHigh ? '（物理漏损）' : ''}
+            </span>
+            <span style={{ margin: '0 8px' }}>·</span>
+            <span style={appLow ? { color: 'var(--seal)' } : undefined}>
+              智慧农业APP：
+              {infra.hasSmartAgriApp
+                ? `已上线，村民使用率 ${Math.round(infra.appAdoptionRate * 100)}%${appLow ? '（无效投资）' : ''}`
+                : '未上线'}
+            </span>
+          </div>
+          <p style={{ fontSize: 12.5, color: 'rgba(58,46,36,0.65)', marginTop: 3 }}>
+            扩建冷链库容 / 上线智慧农业APP：回县政府节点，在交互栏里耗个人精力办理。
+          </p>
         </div>
       </div>
     </section>

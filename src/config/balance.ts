@@ -71,4 +71,17 @@ export const balance: BalanceConfig = {
     perCadrePerRound: 2, // 每名驻村干部每回合生成 2 点护盾
     max: 8, // 单村护盾上限
   },
+  economy: {
+    chainWithdrawChance: 0.25, // 退坡期高依赖链主每回合 25% 概率撤资
+    chainWithdrawTrustHit: 6, // 撤资砸下的信任
+    enclaveDividendInterval: 4, // 飞地每 4 回合分红一次
+    coldChainUsagePerProject: 1, // 每个 active/recovered 项目占用 1 单位冷链
+    idleRatePenaltyThreshold: 0.35, // 空置率超 35% = 无效投资
+    appAdoptionThreshold: 0.2, // APP 使用率低于 20% = 无效投资
+    appAdoptionGrowth: 0.02, // 参与≥60 时使用率每回合 +2%
+    guaranteedPriceSubsidy: 2, // 保底价契约：该村补贴依赖每回合 +2
+    propertyRightsDualBind: 8, // 产权确权：双绑稳定度 +8
+    premiumTrustPer10: 0.5, // 溢价分成每 10% 信任 +0.5
+    serviceFeeCollectivePerPoint: 0.2, // 服务费每 1 点集体经济 +0.2
+  },
 };

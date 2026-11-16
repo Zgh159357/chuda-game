@@ -69,7 +69,7 @@ describe('规划画区（Zoning）', () => {
     const state = createInitialState(7, 'local');
     state.zoning = [{ x: 2, y: 2, kind: 'industry' }];
     const back = deserialize(serialize(state));
-    expect(back.version).toBe(13);
+    expect(back.version).toBe(14);
     expect(back.zoning).toEqual([{ x: 2, y: 2, kind: 'industry' }]);
   });
 });

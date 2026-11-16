@@ -6,6 +6,7 @@ import React from 'react';
 import type { CoopType, GameState, IndustryTag, MeasureId, PovertyTag } from '../core/types';
 import { config } from '../config';
 import { synergyRecipes, industryNodes } from '../config/industry';
+import { chainMasterCatalog, DEFAULT_CONTRACT, CONTRACT_LABELS } from '../config/economy';
 import { useGame } from './store';
 
 const TAG_NAMES_BUILT: Record<IndustryTag, string> = {
@@ -47,6 +48,11 @@ export function VillageSandbox({ villageId }: { villageId: string }) {
   const openNegotiation = useGame((s) => s.openNegotiation);
   const toggleMentorship = useGame((s) => s.toggleMentorship);
   const toggleBuildNode = useGame((s) => s.toggleBuildNode);
+  const toggleChainInvite = useGame((s) => s.toggleChainInvite);
+  const setEnclaveInvest = useGame((s) => s.setEnclaveInvest);
+  const updateContract = useGame((s) => s.updateContract);
+  const [enclaveTarget, setEnclaveTarget] = React.useState('');
+  const [enclaveCapital, setEnclaveCapital] = React.useState(0);
   if (!state) return null;
   const village = state.villages.find((v) => v.id === villageId);
   if (!village) return null;
@@ -185,6 +191,149 @@ export function VillageSandbox({ villageId }: { villageId: string }) {
               </label>
             );
           })}
+        </div>
+
+        {/* §16 链主企业（纵向整合巨头：给就业税收，也张口要补贴） */}
+        <div className="sandbox-block">
+          <h4>链主企业 · 资本博弈</h4>
+          {chainMasterCatalog
+            .filter((c) => c.targetVillageId === villageId)
+            .map((def) => {
+              const master = state.chainMasters.find((m) => m.id === def.id);
+              const invited = draft.chainInvites.includes(def.id);
+              return (
+                <label key={def.id} style={{ fontSize: 14, display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                  <input
+                    type="checkbox"
+                    disabled={master?.isPresent || !village.surveyed}
+                    checked={master?.isPresent ? true : invited}
+                    onChange={() => toggleChainInvite(def.id)}
+                  />
+                  <span>
+                    {def.name}
+                    {master?.isPresent
+                      ? ` · 已落地（每回合补贴 ${def.requiredSubsidyPerTurn}，税收 ${def.taxRevenue}，就业 ${def.jobCreation} 岗；政策依赖 ${def.policyDependency}${def.policyDependency >= 60 ? ' · 退坡期有撤资风险' : ''}）`
+                      : ` · 落地要每回合补贴 ${def.requiredSubsidyPerTurn}，回报税收 ${def.taxRevenue} + 就业 ${def.jobCreation} 岗；政策依赖 ${def.policyDependency}`}
+                    {!village.surveyed ? ' · 未摸排不来' : ''}
+                  </span>
+                </label>
+              );
+            })}
+        </div>
+
+        {/* §16 飞地抱团（薄弱村出钱入股强村：分红到手，内生产业不长） */}
+        <div className="sandbox-block">
+          <h4>飞地抱团 · 跨村入股</h4>
+          {state.enclaves
+            .filter((e) => e.sourceVillageId === villageId || e.targetVillageId === villageId)
+            .map((e) => (
+              <p key={e.id} className="note" style={{ fontSize: 13 }}>
+                {e.sourceVillageId === villageId
+                  ? `本村入股 ${state.villages.find((v) => v.id === e.targetVillageId)?.name ?? ''}：本金 ${e.investedCapital}，年化 ${Math.round(e.annualDividendRate * 100)}%，已分红 ${e.dividendsPaid}`
+                  : `${state.villages.find((v) => v.id === e.sourceVillageId)?.name ?? ''} 入股本村：本金 ${e.investedCapital}`}
+              </p>
+            ))}
+          <div style={{ fontSize: 14, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span>本村集体出资入股</span>
+            <select value={enclaveTarget} onChange={(e) => setEnclaveTarget(e.target.value)}>
+              <option value="">选强村</option>
+              {state.villages
+                .filter((v) => v.id !== villageId && v.surveyed)
+                .map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}（集体 {Math.round(v.collectiveEconomy)}）
+                  </option>
+                ))}
+            </select>
+            <input
+              type="number"
+              min={0}
+              max={Math.floor(village.collectiveEconomy)}
+              value={enclaveCapital}
+              onChange={(e) => setEnclaveCapital(Math.max(0, Number(e.target.value)))}
+              style={{ width: 70 }}
+              title="从村集体账上划出的本金（锁定，退不出来）"
+            />
+            <button
+              className="end-turn"
+              style={{ fontSize: 13, padding: '2px 10px' }}
+              onClick={() => {
+                if (enclaveTarget) setEnclaveInvest(villageId, enclaveTarget, enclaveCapital, 0.1);
+              }}
+            >
+              签入股协议（年化 10%）
+            </button>
+          </div>
+          <p className="note" style={{ fontSize: 12.5 }}>
+            注意：分红只进村集体账本，不会长出本村的产业和内生活力——飞地救急，不救本。
+          </p>
+        </div>
+
+        {/* §16 契约化分红（写进纸面的分钱条款） */}
+        <div className="sandbox-block">
+          <h4>契约化分红 · 条款</h4>
+          {(() => {
+            const c = {
+              ...DEFAULT_CONTRACT,
+              ...(state.distributionContracts[villageId] ?? {}),
+              ...(draft.contractUpdates[villageId] ?? {}),
+            };
+            return (
+              <>
+                <label style={{ fontSize: 14, display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                  <input
+                    type="checkbox"
+                    checked={c.guaranteedPrice}
+                    onChange={(e) => updateContract(villageId, { guaranteedPrice: e.target.checked })}
+                  />
+                  <span>{CONTRACT_LABELS.guaranteedPrice}（农户安心退贫，但该村补贴依赖每回合 +2）</span>
+                </label>
+                <label style={{ fontSize: 14, display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                  <input
+                    type="checkbox"
+                    disabled={village.dualBindStability < 45}
+                    checked={c.propertyRightsToVillage}
+                    onChange={(e) => updateContract(villageId, { propertyRightsToVillage: e.target.checked })}
+                  />
+                  <span>
+                    {CONTRACT_LABELS.propertyRightsToVillage}（双绑 ≥45 才谈得下来；确权后双绑每回合 +8）
+                  </span>
+                </label>
+                <label style={{ fontSize: 14, display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                  <span>{CONTRACT_LABELS.premiumSharingToFarmer}：</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={c.premiumSharingToFarmer}
+                    onChange={(e) =>
+                      updateContract(villageId, {
+                        premiumSharingToFarmer: Math.max(0, Math.min(100, Number(e.target.value))),
+                      })
+                    }
+                    style={{ width: 60 }}
+                  />
+                  <span>（参与/信任随分成上涨）</span>
+                </label>
+                <label style={{ fontSize: 14, display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                  <span>{CONTRACT_LABELS.collectiveServiceFee}：</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={10}
+                    value={c.collectiveServiceFee}
+                    onChange={(e) =>
+                      updateContract(villageId, {
+                        collectiveServiceFee: Math.max(0, Math.min(10, Number(e.target.value))),
+                      })
+                    }
+                    style={{ width: 60 }}
+                  />
+                  <span>（进村集体账）</span>
+                </label>
+              </>
+            );
+          })()}
         </div>
 
         {/* 分类施策（五个一批） */}

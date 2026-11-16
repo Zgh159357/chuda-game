@@ -39,6 +39,9 @@ const EVENT_TAGS: Record<string, { text: string; cls: string }> = {
   resilienceAbsorbed: { text: '韧性缓冲', cls: 'warn' },
   governanceShieldAbsorbed: { text: '治理护盾', cls: 'good' },
   synergyUnlocked: { text: '流派解锁', cls: 'good' },
+  chainWithdraw: { text: '链主撤资', cls: 'bad' },
+  enclaveDividend: { text: '飞地分红', cls: '' },
+  infraWaste: { text: '物理漏损', cls: 'warn' },
 };
 
 function eventText(outcome: RoundOutcome, e: RoundOutcome['events'][number]): string {
@@ -153,6 +156,18 @@ function eventText(outcome: RoundOutcome, e: RoundOutcome['events'][number]): st
       const recipe = synergyRecipes.find((r) => r.id === e.recipeId);
       return `${v?.name ?? e.villageId} 炼出了「${recipe?.unlockVillageTitle ?? e.recipeId}」——${recipe?.specialEffectDesc ?? ''}`;
     }
+    case 'chainWithdraw': {
+      const master = outcome.state.chainMasters.find((m) => m.id === e.chainId);
+      const v = outcome.state.villages.find((x) => x.id === e.villageId);
+      return `${master?.name ?? e.chainId} 从 ${v?.name ?? e.villageId} 撤资离场：补贴一退，账本一合，说走就走。`;
+    }
+    case 'enclaveDividend': {
+      const enc = outcome.state.enclaves.find((x) => x.id === e.enclaveId);
+      const v = outcome.state.villages.find((x) => x.id === enc?.sourceVillageId);
+      return `${v?.name ?? ''} 收到飞地分红 ${e.amount}：钱到账了，但本村的产业还是老样子。`;
+    }
+    case 'infraWaste':
+      return config.text[e.textId] ?? e.textId;
     default:
       return '';
   }

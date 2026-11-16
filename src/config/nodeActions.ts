@@ -90,4 +90,26 @@ export const nodeActions: NodeActionSpec[] = [
       { kind: 'facility', value: 0, facilityId: 'workshop' },
     ],
   },
+  {
+    id: 'coldchain_expand',
+    name: '扩建冷链库容',
+    nodeKind: 'county',
+    cost: 1,
+    desc: '给县冷链站再挂两节库：装得下，才留得住鲜货。耗财政 20。',
+    effects: [
+      { kind: 'fiscalFund', value: -20 },
+      { kind: 'coldChainExpand', value: 2 },
+    ],
+  },
+  {
+    id: 'smart_app_launch',
+    name: '上线智慧农业 APP',
+    nodeKind: 'county',
+    cost: 1,
+    desc: '把产销数据搬上手机。建得起，还得有人真用。耗财政 15。',
+    effects: [
+      { kind: 'fiscalFund', value: -15 },
+      { kind: 'smartApp', value: 1 },
+    ],
+  },
 ];

@@ -26,6 +26,7 @@ import { resolveHeroAssign, settleRecruitChoices, heroSumAll, heroIsSick, flawSu
 import { evaluateHeroRecruits } from './systems/unlockEngine';
 import { settleFloorDefense, settleResilience } from './systems/resilience';
 import { settleVillageSynergies } from './systems/synergy';
+import { settleEconomy } from './systems/economy';
 import { settleZoning } from './sandbox/zoning';
 import { applyLogistics } from './sandbox/logistics';
 import { computeStars } from './settlement/stars';
@@ -188,6 +189,7 @@ export function playRound(prev: GameState, actions: RoundActions, maxRounds: Rou
   settleIndustry(state, ctx);
   applyLogistics(state, ctx); // 物流/产业链：工厂项目缺原料/道路/物流站 → 烂尾+扣财政
   settleVillageSynergies(state, ctx, catalyst); // §14/§15 涌现式融合：资源标签 × 产业标签 → 流派解锁（商机联动）
+  settleEconomy(state, actions, ctx); // §16 产业深度模拟：链主/飞地/契约/基础设施
   settleResettlement(state, ctx);
   settleSubsidy(state, ctx);
   settleCollaboration(state, ctx);

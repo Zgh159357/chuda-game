@@ -186,6 +186,21 @@ export function resolveActions(state: GameState, actions: RoundActions, ctx: Tur
           buildRoadSegment(state);
           ctx.pushFeedback('mf_clean_desk', 'road_built');
           break;
+        case 'coldChainExpand': {
+          // §16 物理漏损：扩建冷链库容（空置率随之重算）
+          state.physicalInfra.coldChainCapacity += e.value;
+          ctx.pushFeedback('mf_clean_desk', 'coldchain_expand_text');
+          break;
+        }
+        case 'smartApp': {
+          // §16 数字化错位：上线智慧农业 APP（使用率从 0 起步，低=无效投资）
+          if (!state.physicalInfra.hasSmartAgriApp) {
+            state.physicalInfra.hasSmartAgriApp = true;
+            state.physicalInfra.appAdoptionRate = 0.05;
+            ctx.pushFeedback('mf_clean_desk', 'smart_app_text');
+          }
+          break;
+        }
         default:
           break;
       }

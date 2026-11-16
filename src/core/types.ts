@@ -375,6 +375,48 @@ export interface HeroState {
   recruitRound?: number; // 入队回合（病倒周期用）
 }
 
+// ===== §16 产业深度模拟（链主资本博弈 / 飞地腾挪 / 契约化分配 / 物理漏损） =====
+/** 链主企业（纵向整合巨头）：落地要补贴、给就业税收，退坡就撤资 */
+export interface ChainMaster {
+  id: string;
+  name: string; // 如「云岭乳业链主」「通海高原蔬菜」
+  targetVillageId: string; // 意向投资村（产业禀赋匹配）
+  requiredSubsidyPerTurn: number; // 落地后每回合索要的政策补贴
+  jobCreation: number; // 创造就业（降该村返贫风险）
+  taxRevenue: number; // 每回合税收贡献（进县财政）
+  policyDependency: number; // 政策依赖度 0-100：补贴退坡时撤资风险
+  isPresent: boolean; // 是否已落地
+  settledRound?: number; // 落地回合（退坡风险与退坡时点联动）
+  subsidyPaid: number; // 累计已支付补贴（复盘用）
+}
+
+/** 飞地抱团：薄弱村出钱入股强村项目——分红到手，但内生产业能力不涨（县域经济痛点） */
+export interface EnclaveInvestment {
+  id: string;
+  sourceVillageId: string; // 薄弱村（出钱的）
+  targetVillageId: string; // 强村/产业村（出地出项目的）
+  investedCapital: number; // 投入本金（锁定，不可挪回）
+  annualDividendRate: number; // 承诺年化分红率（如 0.10 = 10%）
+  investedRound: number; // 入股回合
+  dividendsPaid: number; // 累计已分红（复盘用）
+}
+
+/** 契约化分红条款：把「分多少、怎么分、出事了归谁」写进纸面 */
+export interface DistributionContract {
+  guaranteedPrice: boolean; // 保底收购价：农户安心，但补贴依赖 +
+  premiumSharingToFarmer: number; // 溢价分成给农户的比例 0-100
+  collectiveServiceFee: number; // 村集体抽取的管理服务费
+  propertyRightsToVillage: boolean; // 产权确权给村集体：极难，但抗风险极强
+}
+
+/** 物理基础设施与数字化错位：建了不等于用上了 */
+export interface PhysicalInfrastructure {
+  coldChainCapacity: number; // 冷链容量（承接能力，单位=项目当量）
+  coldChainIdleRate: number; // 冷库空置率 0-1（容量远超实际用量时上升）
+  hasSmartAgriApp: boolean; // 是否上线智慧农业 APP
+  appAdoptionRate: number; // 村民实际使用率 0-1（低=无效投资）
+}
+
 /** 本回合草稿：跨视图累积（UI 层填写，核心层一次性结算） */
 export interface DraftState {
   slots: { party?: SlotDraft; industry?: SlotDraft; livelihood?: SlotDraft };
@@ -405,6 +447,9 @@ export interface DraftState {
   recruitChoices: { heroId: string; accepted: boolean }[]; // 人才两难：本回合抉择（v7 起）
   mentorship: string[]; // §10：本回合指派「传帮带」的村 id
   buildNodes: { nodeId: string; villageId: string }[]; // §15：本回合自建产业设施
+  chainInvites: string[]; // §16：本回合邀请落地的链主 id
+  enclaveInvest: EnclaveInvestment[]; // §16：本回合新签的飞地入股（本金由源村财政出）
+  contractUpdates: Record<string, DistributionContract>; // §16：本回合更新的村分红契约
 }
 
 // ===== 干部（主体性实体：精力 / 士气 / 疲劳） =====
@@ -752,7 +797,10 @@ export type GameEvent =
   | FloorDefenseEvent
   | ResilienceAbsorbedEvent
   | GovernanceShieldAbsorbedEvent
-  | SynergyUnlockedEvent;
+  | SynergyUnlockedEvent
+  | ChainWithdrawEvent
+  | EnclaveDividendEvent
+  | InfraWasteEvent;
 
 export interface CohesionRiotEvent {
   type: 'cohesionRiot';
@@ -859,6 +907,23 @@ export interface SynergyUnlockedEvent {
   villageId: string;
   recipeId: string;
 }
+export interface ChainWithdrawEvent {
+  type: 'chainWithdraw'; // §16 链主撤资：补贴退坡撞上政策依赖
+  round: Round;
+  chainId: string;
+  villageId: string;
+}
+export interface EnclaveDividendEvent {
+  type: 'enclaveDividend'; // §16 飞地分红：源村拿到钱，但内生产业没长
+  round: Round;
+  enclaveId: string;
+  amount: number;
+}
+export interface InfraWasteEvent {
+  type: 'infraWaste'; // §16 物理漏损：冷库空转 / APP 没人用
+  round: Round;
+  textId: string;
+}
 
 // ===== 大考 / 失败 / 结局 =====
 export type CheckpointId =
@@ -956,6 +1021,9 @@ export interface RoundActions {
   recruitChoices?: { heroId: string; accepted: boolean }[]; // 人才两难抉择（v7 起）
   mentorship?: string[]; // §10：本回合指派「传帮带」的村 id
   buildNodes?: { nodeId: string; villageId: string }[]; // §15：本回合自建产业设施
+  chainInvites?: string[]; // §16：本回合邀请落地的链主 id
+  enclaveInvest?: EnclaveInvestment[]; // §16：本回合新签飞地入股
+  contractUpdates?: Record<string, DistributionContract>; // §16：本回合更新分红契约
   skip?: boolean; // 跳过部分操作（空转回合）
 }
 
@@ -1032,6 +1100,10 @@ export interface GameState {
   pendingRecruits: { heroId: string; question: string }[]; // 待抉择的人才两难（v7 起）
   declinedRecruits: string[]; // 已拒绝的人才（declineCloses 后不再触发）
   builtNodes: BuiltNode[]; // §15 玩家自建产业设施（沙盘自由组合）
+  chainMasters: ChainMaster[]; // §16 链主企业（落地/撤资状态）
+  enclaves: EnclaveInvestment[]; // §16 飞地抱团入股（跨村资本）
+  distributionContracts: Record<string, DistributionContract>; // §16 各村分红契约
+  physicalInfra: PhysicalInfrastructure; // §16 冷链与数字化错位
 }
 
 export interface RoundRecord {
@@ -1265,5 +1337,19 @@ export interface BalanceConfig {
     // §11 治理护盾（村级）：按驻村干部数每回合生成，负面事件优先扣盾
     perCadrePerRound: number; // 每名驻村干部每回合生成的护盾值
     max: number; // 单村护盾上限
+  };
+  economy: {
+    // §16 产业深度模拟
+    chainWithdrawChance: number; // 政策依赖≥60 且补贴退坡轮次后，每回合撤资概率
+    chainWithdrawTrustHit: number; // 撤资对信任的冲击
+    enclaveDividendInterval: number; // 飞地每 N 回合分红一次
+    coldChainUsagePerProject: number; // 每个 active/recovered 项目占用的冷链容量
+    idleRatePenaltyThreshold: number; // 空置率超此值=无效投资（代价账+生态）
+    appAdoptionThreshold: number; // APP 使用率低于此值=无效投资
+    appAdoptionGrowth: number; // 参与度高时使用率每回合自然增长
+    guaranteedPriceSubsidy: number; // 保底收购价带来的补贴依赖（每回合）
+    propertyRightsDualBind: number; // 产权确权给村集体→双绑稳定度加成
+    premiumTrustPer10: number; // 溢价分成每 10% 带来的信任
+    serviceFeeCollectivePerPoint: number; // 服务费每 1 点带来的集体经济
   };
 }

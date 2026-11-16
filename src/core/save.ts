@@ -1,6 +1,7 @@
 import type { EnvironmentTraits, GameState, Round } from './types';
 import { config } from '../config';
 import { makeCadres } from '../config/world';
+import { chainMasterCatalog, INITIAL_INFRA } from '../config/economy';
 
 // ============================================================
 // 存档：序列化 / 反序列化 / localStorage 持久化
@@ -15,9 +16,9 @@ import { makeCadres } from '../config/world';
 // v9（治理护盾）：新增村级治理护盾，v8 存档自动迁移。
 // ============================================================
 
-const STORAGE_KEY = 'chuda.save.v13';
-const LEGACY_KEYS = ['chuda.save.v12', 'chuda.save.v11', 'chuda.save.v10', 'chuda.save.v9', 'chuda.save.v8', 'chuda.save.v7', 'chuda.save.v6', 'chuda.save.v5', 'chuda.save.v4', 'chuda.save.v3', 'chuda.save.v2', 'chuda.save.v1'];
-export const SAVE_VERSION = 13;
+const STORAGE_KEY = 'chuda.save.v14';
+const LEGACY_KEYS = ['chuda.save.v13', 'chuda.save.v12', 'chuda.save.v11', 'chuda.save.v10', 'chuda.save.v9', 'chuda.save.v8', 'chuda.save.v7', 'chuda.save.v6', 'chuda.save.v5', 'chuda.save.v4', 'chuda.save.v3', 'chuda.save.v2', 'chuda.save.v1'];
+export const SAVE_VERSION = 14;
 
 export function serialize(state: GameState): string {
   return JSON.stringify(state);
@@ -154,6 +155,20 @@ function migrateV12(data: GameState): void {
   if (!Array.isArray(data.builtNodes)) data.builtNodes = [];
 }
 
+/** v13 → v14：补产业深度模拟（链主/飞地/契约/基础设施，§16） */
+function migrateV13(data: GameState): void {
+  if (!Array.isArray(data.chainMasters)) {
+    data.chainMasters = chainMasterCatalog.map((c) => ({ ...c, isPresent: false, subsidyPaid: 0 }));
+  }
+  if (!Array.isArray(data.enclaves)) data.enclaves = [];
+  if (typeof data.distributionContracts !== 'object' || data.distributionContracts === null) {
+    data.distributionContracts = {};
+  }
+  if (typeof data.physicalInfra !== 'object' || data.physicalInfra === null) {
+    data.physicalInfra = { ...INITIAL_INFRA };
+  }
+}
+
 export function deserialize(json: string): GameState {
   const data = JSON.parse(json) as GameState;
   if (data.version === 1) {
@@ -202,6 +217,10 @@ export function deserialize(json: string): GameState {
   }
   if (data.version === 12) {
     migrateV12(data);
+    data.version = 13;
+  }
+  if (data.version === 13) {
+    migrateV13(data);
     data.version = SAVE_VERSION;
   }
   if (data.version !== SAVE_VERSION) {

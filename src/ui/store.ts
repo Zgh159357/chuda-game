@@ -14,6 +14,7 @@ import type {
   Round,
   RoundActions,
   RoundOutcome,
+  DistributionContract,
   SlotDraft,
   SlotKind,
   TargetingLevel,
@@ -92,6 +93,9 @@ function defaultDraft(state: GameState | null): DraftState {
     recruitChoices: [],
     mentorship: [],
     buildNodes: [], // §15 自建产业设施（村庄沙盘蓝图落子）
+    chainInvites: [], // §16 链主引进
+    enclaveInvest: [], // §16 飞地入股（本回合新签）
+    contractUpdates: {}, // §16 契约修订（村 id → 条款）
   };
 }
 
@@ -193,6 +197,10 @@ interface GameStore {
   toggleBuildNode: (nodeId: string, villageId: string) => void; // 传帮带指令：勾选/取消本回合驻村村
   clearFloorDefenseFlash: () => void;
   clearSynergyFlash: () => void;
+
+  toggleChainInvite: (chainId: string) => void; // §16 链主引进（本回合草稿）
+  setEnclaveInvest: (sourceVillageId: string, targetVillageId: string, capital: number, rate: number) => void; // §16 飞地入股
+  updateContract: (villageId: string, patch: Partial<DistributionContract>) => void; // §16 契约修订
 
   getBlockingFileId: () => string | null;
   endTurn: () => void;
@@ -535,6 +543,69 @@ export const useGame = create<GameStore>((set, get) => ({
     });
   },
 
+  toggleChainInvite: (chainId) => {
+    const { draft } = get();
+    const has = draft.chainInvites.includes(chainId);
+    set({
+      draft: {
+        ...draft,
+        chainInvites: has ? draft.chainInvites.filter((c) => c !== chainId) : [...draft.chainInvites, chainId],
+      },
+    });
+  },
+
+  setEnclaveInvest: (sourceVillageId, targetVillageId, capital, rate) => {
+    const { draft } = get();
+    if (capital <= 0) {
+      set({
+        draft: {
+          ...draft,
+          enclaveInvest: draft.enclaveInvest.filter(
+            (e) => !(e.sourceVillageId === sourceVillageId && e.targetVillageId === targetVillageId)
+          ),
+        },
+      });
+      return;
+    }
+    const exists = draft.enclaveInvest.some(
+      (e) => e.sourceVillageId === sourceVillageId && e.targetVillageId === targetVillageId
+    );
+    set({
+      draft: {
+        ...draft,
+        enclaveInvest: exists
+          ? draft.enclaveInvest.map((e) =>
+              e.sourceVillageId === sourceVillageId && e.targetVillageId === targetVillageId
+                ? { ...e, investedCapital: capital, annualDividendRate: rate }
+                : e
+            )
+          : [
+              ...draft.enclaveInvest,
+              {
+                id: `draft_${sourceVillageId}_${targetVillageId}`,
+                sourceVillageId,
+                targetVillageId,
+                investedCapital: capital,
+                annualDividendRate: rate,
+                investedRound: 0,
+                dividendsPaid: 0,
+              },
+            ],
+      },
+    });
+  },
+
+  updateContract: (villageId, patch) => {
+    const { draft } = get();
+    const current = draft.contractUpdates[villageId] ?? {};
+    set({
+      draft: {
+        ...draft,
+        contractUpdates: { ...draft.contractUpdates, [villageId]: { ...current, ...patch } },
+      },
+    });
+  },
+
   clearFloorDefenseFlash: () => set({ floorDefenseFlash: null }),
   clearSynergyFlash: () => set({ synergyFlash: null }),
 
@@ -660,6 +731,9 @@ export const useGame = create<GameStore>((set, get) => ({
       recruitChoices: draft.recruitChoices,
       mentorship: draft.mentorship,
       buildNodes: draft.buildNodes,
+      chainInvites: draft.chainInvites,
+      enclaveInvest: draft.enclaveInvest,
+      contractUpdates: draft.contractUpdates,
     };
     const outcome = playRound(state, actions, maxRounds);
     saveToLocal(outcome.state);
