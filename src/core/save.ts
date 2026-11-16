@@ -14,11 +14,12 @@ import { chainMasterCatalog, INITIAL_INFRA } from '../config/economy';
 // v7（因果律扩展）：新增事件历史/连击状态/人才两难队列，v6 存档自动迁移。
 // v8（组织韧性）：新增组织韧性池/传帮带产出系数，v7 存档自动迁移。
 // v9（治理护盾）：新增村级治理护盾，v8 存档自动迁移。
+// v15（产业引擎）：新增村级飞地持仓快照，v14 存档自动迁移。
 // ============================================================
 
-const STORAGE_KEY = 'chuda.save.v14';
-const LEGACY_KEYS = ['chuda.save.v13', 'chuda.save.v12', 'chuda.save.v11', 'chuda.save.v10', 'chuda.save.v9', 'chuda.save.v8', 'chuda.save.v7', 'chuda.save.v6', 'chuda.save.v5', 'chuda.save.v4', 'chuda.save.v3', 'chuda.save.v2', 'chuda.save.v1'];
-export const SAVE_VERSION = 14;
+const STORAGE_KEY = 'chuda.save.v15';
+const LEGACY_KEYS = ['chuda.save.v14', 'chuda.save.v13', 'chuda.save.v12', 'chuda.save.v11', 'chuda.save.v10', 'chuda.save.v9', 'chuda.save.v8', 'chuda.save.v7', 'chuda.save.v6', 'chuda.save.v5', 'chuda.save.v4', 'chuda.save.v3', 'chuda.save.v2', 'chuda.save.v1'];
+export const SAVE_VERSION = 15;
 
 export function serialize(state: GameState): string {
   return JSON.stringify(state);
@@ -169,6 +170,13 @@ function migrateV13(data: GameState): void {
   }
 }
 
+/** v14 → v15：补村级飞地持仓快照（enclaveInvestments，§17） */
+function migrateV14(data: GameState): void {
+  for (const v of data.villages) {
+    if (!Array.isArray(v.enclaveInvestments)) v.enclaveInvestments = [];
+  }
+}
+
 export function deserialize(json: string): GameState {
   const data = JSON.parse(json) as GameState;
   if (data.version === 1) {
@@ -221,6 +229,10 @@ export function deserialize(json: string): GameState {
   }
   if (data.version === 13) {
     migrateV13(data);
+    data.version = 14;
+  }
+  if (data.version === 14) {
+    migrateV14(data);
     data.version = SAVE_VERSION;
   }
   if (data.version !== SAVE_VERSION) {

@@ -401,6 +401,13 @@ export interface EnclaveInvestment {
   dividendsPaid: number; // 累计已分红（复盘用）
 }
 
+/** 村级飞地持仓快照（挂在源村上，纯函数 calculateEnclaveImpact 的数据源） */
+export interface EnclaveHolding {
+  investedCapital: number;
+  annualDividendRate: number;
+  targetVillageId: string;
+}
+
 /** 契约化分红条款：把「分多少、怎么分、出事了归谁」写进纸面 */
 export interface DistributionContract {
   guaranteedPrice: boolean; // 保底收购价：农户安心，但补贴依赖 +
@@ -544,6 +551,7 @@ export interface VillageState {
   industryOutputMul: number; // §10 产业产出乘数（传帮带当回合 =0.7，结算后复位 1）
   governanceShield: number; // §11 治理护盾：按驻村干部数每回合生成，负面事件优先扣护盾
   synergyTitles: string[]; // §14 已解锁的融合配方 id（如 recipe_se_agri）；头衔=配方.unlockVillageTitle
+  enclaveInvestments: EnclaveHolding[]; // §17 本村持有的飞地入股（拿分红、损内生）
 }
 
 // ===== 户群 =====

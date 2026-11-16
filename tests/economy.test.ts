@@ -58,7 +58,7 @@ describe('§16 产业深度模拟 · 链主', () => {
     expect(fiscalAfterSettle).toBeLessThan(120 + 25); // 首付+补贴拖低过财政
   });
 
-  it('退坡期（r35+）依赖度≥75 且 rng 低 → 撤资：产业-6、信任-6、事件+负账', () => {
+  it('退坡期（r35+）依赖度高且财政开不出补贴 → 满意度崩盘撤资：产业-6、信任-6、事件+负账', () => {
     const s = fresh();
     const milk = chainMasterCatalog[0];
     const v = s.villages.find((x) => x.id === milk.targetVillageId)!;
@@ -66,8 +66,9 @@ describe('§16 产业深度模拟 · 链主', () => {
     s.county.fiscalFund = 500;
     const s1 = playRound(s, { chainInvites: [milk.id] }).state;
     s1.chainMasters.find((m) => m.id === milk.id)!.isPresent = true;
-    // 直接驱动到 r35 退坡期（构造第 35 回合上下文）
-    const rng = () => 0.01; // 必然低于撤资概率
+    s1.county.fiscalFund = 5; // 连一期补贴（12）都开不出 → 满意度 −30 −20
+    s1.county.round = 35; // 退坡期（纯函数按 county.round 判阶段）
+    const rng = () => 0.99; // 纯函数判定与 rng 无关
     const ctx = createTurnCtx(s1, rng, 35);
     const industryBefore = s1.villages.find((x) => x.id === milk.targetVillageId)!.industryBase;
     settleEconomy(s1, {}, ctx);
@@ -77,10 +78,23 @@ describe('§16 产业深度模拟 · 链主', () => {
     expect(ctx.events.some((e) => e.type === 'chainWithdraw')).toBe(true);
     expect(ctx.ledgerDelta.some((l) => l.kind === 'cost')).toBe(true);
   });
+
+  it('退坡期依赖 55 的链主（通海蔬菜）财政充足 → 不撤资', () => {
+    const s = fresh();
+    const veg = chainMasterCatalog[1]; // dep 55
+    const v = s.villages.find((x) => x.id === veg.targetVillageId)!;
+    v.surveyed = true;
+    s.county.fiscalFund = 500;
+    const s1 = playRound(s, { chainInvites: [veg.id] }).state;
+    s1.county.fiscalFund = 300;
+    const ctx = createTurnCtx(s1, () => 0.01, 36);
+    settleEconomy(s1, {}, ctx);
+    expect(s1.chainMasters.find((x) => x.id === veg.id)!.isPresent).toBe(true);
+  });
 });
 
 describe('§16 产业深度模拟 · 飞地抱团', () => {
-  it('签约锁定本金；分红只进集体账，源村产业与内生不涨', () => {
+  it('签约锁定本金；分红进集体账，源村产业不涨、内生治理倒扣', () => {
     const s = fresh();
     const src = s.villages.find((v) => v.id === 'v_yunxi')!;
     const dst = s.villages.find((v) => v.id === 'v_qingshi')!;
@@ -91,16 +105,17 @@ describe('§16 产业深度模拟 · 飞地抱团', () => {
     settleEconomy(s, { enclaveInvest: [{ sourceVillageId: 'v_yunxi', targetVillageId: 'v_qingshi', investedCapital: cap, annualDividendRate: 0.1 }] }, ctx);
     expect(s.enclaves).toHaveLength(1);
     expect(src.collectiveEconomy).toBe(100 - cap);
-    // 第 4 回合持有期满 4 → 分红（用新 ctx 结算，roundsHeld=4）
+    expect(src.enclaveInvestments).toHaveLength(1);
+    // 第 8 回合持有期满 4 → 分红；目标村产业 40/100 → 健康度 0.4 → 分红腰斩 + 内生治理 −2
     const s2 = JSON.parse(JSON.stringify(s)) as GameState;
     const ctx2 = createTurnCtx(s2, () => 0.5, 8);
     const collectiveBefore = s2.villages.find((v) => v.id === 'v_yunxi')!.collectiveEconomy;
     const industryBefore = s2.villages.find((v) => v.id === 'v_yunxi')!.industryBase;
     const govBefore = s2.villages.find((v) => v.id === 'v_yunxi')!.internalGovernance;
     settleEconomy(s2, {}, ctx2);
-    expect(s2.villages.find((v) => v.id === 'v_yunxi')!.collectiveEconomy).toBe(collectiveBefore + Math.round(cap * 0.1));
+    expect(s2.villages.find((v) => v.id === 'v_yunxi')!.collectiveEconomy).toBe(collectiveBefore + 3); // round(60×0.1×0.5)
     expect(s2.villages.find((v) => v.id === 'v_yunxi')!.industryBase).toBe(industryBefore);
-    expect(s2.villages.find((v) => v.id === 'v_yunxi')!.internalGovernance).toBe(govBefore);
+    expect(s2.villages.find((v) => v.id === 'v_yunxi')!.internalGovernance).toBe(govBefore - 2);
     expect(ctx2.events.some((e) => e.type === 'enclaveDividend')).toBe(true);
   });
 
@@ -191,9 +206,10 @@ describe('§16 存档 v14 往返', () => {
       nodeActions: ['coldchain_expand'],
     }).state;
     const back = deserialize(serialize(out));
-    expect(back.version).toBe(14);
+    expect(back.version).toBe(15);
     expect(back.chainMasters.find((m) => m.id === 'chain_veg')!.isPresent).toBe(true);
     expect(back.enclaves).toHaveLength(1);
+    expect(back.villages.find((v) => v.id === 'v_wuling')!.enclaveInvestments).toHaveLength(1);
     expect(back.distributionContracts['v_yunxi'].guaranteedPrice).toBe(true);
     expect(back.physicalInfra.coldChainCapacity).toBe(4);
   });

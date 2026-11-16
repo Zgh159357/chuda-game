@@ -6,6 +6,7 @@ import { wonderSum } from './wonders';
 import { heroSum, flawSum } from './heroes';
 import { shieldDamage } from './governance';
 import { synergyMulOf, hasSynergy } from './synergy';
+import { applyPhysicalLoss } from '../../logic/economyEngine';
 import type { TurnCtx } from './context';
 
 // ============================================================
@@ -96,6 +97,7 @@ export function settleIndustry(state: GameState, ctx: TurnCtx): void {
       effect *= (1 + heroSum(state, v.id, 'agriYield')) * noTech; // 人才 + 毒点（拒现代农业）
       effect *= v.industryOutputMul ?? 1; // §10 传帮带当回合：产业产出 ×0.7
       effect *= synergyMulOf(state, v.id); // §14 涌现式融合流派：产出倍率
+      effect = applyPhysicalLoss(effect, state.physicalInfra); // §17 物理漏损：冷库空转/APP 没用 → 最多 −30%
       if (p.status === 'recovered') effect *= 0.8; // 修复后打折起步
       effect = Math.max(0, effect);
 

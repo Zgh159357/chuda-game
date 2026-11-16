@@ -1,6 +1,11 @@
 import type { GameState, RoundActions, DistributionContract } from '../types';
 import { config } from '../../config';
 import { chainMasterCatalog, DEFAULT_CONTRACT } from '../../config/economy';
+import {
+  evaluateChainMasterExit,
+  calculateEnclaveImpact,
+  resolveContract,
+} from '../../logic/economyEngine';
 import type { TurnCtx } from './context';
 
 // ============================================================
@@ -39,7 +44,7 @@ function settleChainInvites(state: GameState, actions: RoundActions | undefined,
   }
 }
 
-/** 链主每回合结算：就业/税收/补贴需求 + 退坡撤资风险 */
+/** 链主每回合结算：就业/税收/补贴需求 + 满意度撤资（§17 纯函数判定） */
 function settleChainMasters(state: GameState, ctx: TurnCtx): void {
   const b = config.balance.economy;
   for (const master of state.chainMasters) {
@@ -50,33 +55,31 @@ function settleChainMasters(state: GameState, ctx: TurnCtx): void {
     village.returnRisk = Math.max(0, village.returnRisk - 1);
     village.industryBase = Math.min(100, village.industryBase + 0.5);
     state.county.fiscalFund += master.taxRevenue;
-    // 政策补贴需求：每回合明码索价
+    // 政策补贴需求：每回合明码索价（§17：强制扣除 requiredSubsidyPerTurn）
     const subsidy = Math.min(master.requiredSubsidyPerTurn, state.county.fiscalFund);
     state.county.fiscalFund -= subsidy;
     master.subsidyPaid += subsidy;
     village.subsidyDependence = Math.min(100, village.subsidyDependence + 0.5);
-    // 退坡撤资：政策依赖度撞上补贴退坡期
-    if (chainWithdrawRisk(state, ctx.round) && master.policyDependency >= 60) {
-      const p = master.policyDependency >= 75 ? b.chainWithdrawChance * 1.5 : b.chainWithdrawChance;
-      if (ctx.rng() < p) {
-        master.isPresent = false;
-        village.industryBase = Math.max(0, village.industryBase - 6);
-        village.returnRisk = Math.min(100, village.returnRisk + 5);
-        state.county.trust = Math.max(0, state.county.trust - b.chainWithdrawTrustHit);
-        ctx.pushEvent({
-          type: 'chainWithdraw',
-          round: ctx.round,
-          chainId: master.id,
-          villageId: village.id,
-        });
-        ctx.pushLedger('cost', 'chain_withdraw', -6, `${master.name} 撤资离场`);
-        ctx.addStars(-10);
-      }
+    // §17 撤资判定：满意度跌破阈值 → 直接撤资（不再掷骰子，因果全在满意度上）
+    const verdict = evaluateChainMasterExit(state, master.id);
+    if (verdict.willExit) {
+      master.isPresent = false;
+      village.industryBase = Math.max(0, village.industryBase - 6);
+      village.returnRisk = Math.min(100, village.returnRisk + 5);
+      state.county.trust = Math.max(0, state.county.trust - b.chainWithdrawTrustHit);
+      ctx.pushEvent({
+        type: 'chainWithdraw',
+        round: ctx.round,
+        chainId: master.id,
+        villageId: village.id,
+      });
+      ctx.pushLedger('cost', 'chain_withdraw', -6, `${master.name} 撤资离场（${verdict.reason}）`);
+      ctx.addStars(-10);
     }
   }
 }
 
-/** 飞地抱团：新签入股（源村集体出本金）+ 定期分红（钱到账，内生产业不长） */
+/** 飞地抱团：新签入股（源村集体出本金）+ 定期分红（钱到账，内生产业不长，还倒扣内生） */
 function settleEnclaves(state: GameState, actions: RoundActions | undefined, ctx: TurnCtx): void {
   const b = config.balance.economy;
   for (const draft of actions?.enclaveInvest ?? []) {
@@ -93,21 +96,42 @@ function settleEnclaves(state: GameState, actions: RoundActions | undefined, ctx
       investedRound: ctx.round,
       dividendsPaid: 0,
     });
+    // §17：源村持有持仓快照（纯函数 calculateEnclaveImpact 的数据源）
+    source.enclaveInvestments.push({
+      investedCapital: draft.investedCapital,
+      annualDividendRate: draft.annualDividendRate,
+      targetVillageId: draft.targetVillageId,
+    });
     ctx.pushLedger('transition', 'enclave_signed', 2, `${source.name} 入股 ${target.name}`);
     ctx.noteCombo('solid');
   }
+  // 分红：按源村分组，用纯函数算「现金 + 内生治理惩罚」
+  const penaltyApplied = new Map<string, boolean>();
   for (const enc of state.enclaves) {
     const roundsHeld = ctx.round - enc.investedRound;
-    if (roundsHeld > 0 && roundsHeld % b.enclaveDividendInterval === 0) {
-      const dividend = Math.round(enc.investedCapital * enc.annualDividendRate);
-      const source = state.villages.find((v) => v.id === enc.sourceVillageId);
-      if (!source) continue;
-      source.collectiveEconomy += dividend;
-      enc.dividendsPaid += dividend;
-      ctx.pushEvent({ type: 'enclaveDividend', round: ctx.round, enclaveId: enc.id, amount: dividend });
-      ctx.pushLedger('transition', 'enclave_dividend', 1, `${source.name} 收到飞地分红 ${dividend}`);
-      // 刻意不提升源村 industryBase/internalGovernance——飞地不养内生（县域经济痛点）
+    if (roundsHeld <= 0 || roundsHeld % b.enclaveDividendInterval !== 0) continue;
+    const source = state.villages.find((v) => v.id === enc.sourceVillageId);
+    const target = state.villages.find((v) => v.id === enc.targetVillageId);
+    if (!source) continue;
+    const targetHealth = target ? target.industryBase / 100 : 0;
+    const impact = calculateEnclaveImpact(source, targetHealth);
+    source.collectiveEconomy += impact.cashIncome;
+    enc.dividendsPaid += impact.cashIncome;
+    if (!penaltyApplied.has(source.id)) {
+      penaltyApplied.set(source.id, true);
+      source.internalGovernance = Math.max(0, source.internalGovernance - impact.governancePenalty);
+      if (impact.governancePenalty > 0) {
+        ctx.pushLedger(
+          'org',
+          'enclave_governance',
+          -impact.governancePenalty,
+          `${source.name} 躺在分红上，内生治理下滑 ${impact.governancePenalty}`
+        );
+      }
     }
+    ctx.pushEvent({ type: 'enclaveDividend', round: ctx.round, enclaveId: enc.id, amount: impact.cashIncome });
+    ctx.pushLedger('transition', 'enclave_dividend', 1, `${source.name} 收到飞地分红 ${impact.cashIncome}`);
+    // 刻意不提升源村 industryBase/internalGovernance——飞地不养内生（县域经济痛点）
   }
 }
 
@@ -131,18 +155,26 @@ function settleContracts(state: GameState, actions: RoundActions | undefined, ct
         h.exitWillingness = Math.min(100, h.exitWillingness + 2); // 保底价让农户敢退、敢干
       }
     }
-    if (c.premiumSharingToFarmer > 0) {
-      village.participation = Math.min(100, village.participation + c.premiumSharingToFarmer / 20);
-      state.county.trust = Math.min(
-        100,
-        state.county.trust + (c.premiumSharingToFarmer / 10) * b.premiumTrustPer10
-      );
-    }
     if (c.collectiveServiceFee > 0) {
       village.collectiveEconomy += c.collectiveServiceFee * b.serviceFeeCollectivePerPoint;
     }
     if (c.propertyRightsToVillage) {
       village.dualBindStability = Math.min(100, village.dualBindStability + b.propertyRightsDualBind);
+    }
+    // §17 三方博弈：农户/企业/政治分由纯函数算，只把「结果」落回状态
+    const baseProfit = 20 + village.industryBase * 0.5; // 该村代表性利润盘子
+    const outcome = resolveContract(c, baseProfit);
+    if (outcome.farmerIncome > 0) {
+      // 农户实得 → 参与与信任（联农带农考核口径）
+      village.participation = Math.min(100, village.participation + Math.round(outcome.farmerIncome / 10));
+      state.county.trust = Math.min(
+        100,
+        state.county.trust + Math.round((outcome.farmerIncome / 20) * b.premiumTrustPer10)
+      );
+    }
+    // 企业利润被榨干 → 渠道逐渐流失（企业用脚投票）
+    if (outcome.enterpriseProfit < baseProfit * 0.4) {
+      village.industryChannel = Math.max(0, village.industryChannel - 0.5);
     }
   }
 }
