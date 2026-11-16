@@ -5,12 +5,13 @@
 // ============================================================
 import type {
   GameState,
-  HeroSpec,
   TechNodeSpec,
   UnlockCondition,
   WonderSpec,
 } from '../types';
 import { config } from '../../config';
+import { chainOf } from '../../config/heroChains';
+import { chainTriggerMet } from '../../logic/heroChain';
 
 /** 全县干部平均疲劳 */
 export function avgFatigue(state: GameState): number {
@@ -148,17 +149,17 @@ export function heroRecruited(state: GameState, heroId: string): boolean {
   return state.heroes.some((h) => h.heroId === heroId);
 }
 
-/** 某人才此刻是否应触发两难抉择（触发事件链满足 + 未入队 + 未被永拒 + 未在待抉择队列） */
-export function heroOfferDue(state: GameState, hero: HeroSpec): boolean {
-  if (!hero.recruit) return false;
-  if (heroRecruited(state, hero.id)) return false;
-  if (hero.recruit.declineCloses && state.declinedRecruits.includes(hero.id)) return false;
-  if (state.pendingRecruits.some((p) => p.heroId === hero.id)) return false;
-  if (!hasEvents(state, hero.recruit.triggerEvents)) return false;
-  return checkUnlockConditions(state, hero.recruit.conditions).ok;
+/** §18：某人才此刻是否应进入招募池（触发条件满足 + 未入队 + 未被永拒 + 未在池中） */
+export function heroOfferDue(state: GameState, heroId: string): boolean {
+  const chain = chainOf(heroId);
+  if (!chain || chain.recruitSteps.length === 0) return false;
+  if (heroRecruited(state, heroId)) return false;
+  if (chain.declineCloses && state.declinedRecruits.includes(heroId)) return false;
+  if (state.pendingRecruits.some((p) => p.heroId === heroId)) return false;
+  return chainTriggerMet(state, chain);
 }
 
-/** 本轮应触发两难的人才清单（reducer 调用后写入 pendingRecruits） */
-export function evaluateHeroRecruits(state: GameState): HeroSpec[] {
-  return config.heroes.filter((h) => heroOfferDue(state, h));
+/** 本轮应入池的人才 id 清单（reducer 调用后写入 pendingRecruits + heroChains 进度） */
+export function evaluateHeroRecruits(state: GameState): string[] {
+  return config.heroes.filter((h) => heroOfferDue(state, h.id)).map((h) => h.id);
 }

@@ -33,7 +33,7 @@ export function createInitialState(seed: number, anchor: PlayerAnchor): GameStat
   }
 
   return {
-    version: 15,
+    version: 16,
     seed,
     status: 'running',
     anchor,
@@ -118,6 +118,7 @@ export function createInitialState(seed: number, anchor: PlayerAnchor): GameStat
     streaks: { fraudClean: 0, cutCorners: 0, rank: 0, villageStall: {} },
     pendingRecruits: [],
     declinedRecruits: [],
+    heroChains: {},
     builtNodes: [], // §15 自建产业设施
     chainMasters: chainMasterCatalog.map((c) => ({ ...c, isPresent: false, subsidyPaid: 0 })), // §16
     enclaves: [], // §16 飞地抱团

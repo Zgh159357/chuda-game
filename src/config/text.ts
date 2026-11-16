@@ -46,6 +46,8 @@ export const text: Record<string, string> = {
   wonder_done_text: '工程落成了。地图上多了一处谁都能看见的东西。',
   hero_awaken_text: '走访时发现了一个能人。他本来就在村里，只是之前没人张罗。',
   recruit_offered_text: '一封请托信压在案头：要不要用这个人，得你自己拍板。',
+  recruit_done_text: '人谈下来了。本事是真的，脾气也是真的。',
+  recruit_step_fail_text: '这一趟没谈拢。人不傻，光画饼没用。',
   cadre_slack_text: '县里传出闲话：有的干部最近蔫了，下乡的日子比上个月少了一半。',
   industry_disaster_text: '一场天灾砸在产业上，棚塌了，苗蔫了，账本比地还湿。',
   resilience_absorb_text: '组织韧性抵挡了 {amount} 点治理力损耗。班子还在，账还能慢慢还。',

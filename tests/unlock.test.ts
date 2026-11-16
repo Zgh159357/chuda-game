@@ -15,7 +15,7 @@ import {
   hasEvents,
 } from '../src/core/systems/unlockEngine';
 import { settleImplicitTech } from '../src/core/systems/techTree';
-import { heroIsSick, settleRecruitChoices } from '../src/core/systems/heroes';
+import { heroIsSick, settleHeroSteps, settleHeroDeclines } from '../src/core/systems/heroes';
 import { settleAssessment } from '../src/core/systems/assessment';
 import { serialize, deserialize } from '../src/core/save';
 import { config } from '../src/config';
@@ -102,24 +102,27 @@ describe('人才招募两难', () => {
     const s = createInitialState(208, 'local');
     s.eventHistory.push('villagerInitiative');
     s.county.round = 4;
-    const h = config.heroes.find((x) => x.id === 'hero_returner')!;
-    expect(heroOfferDue(s, h)).toBe(true);
+    expect(heroOfferDue(s, 'hero_returner')).toBe(true);
     s.declinedRecruits.push('hero_returner');
-    expect(heroOfferDue(s, h)).toBe(false);
+    expect(heroOfferDue(s, 'hero_returner')).toBe(false);
   });
 
-  it('接受→扣成本入队；拒绝→永拒+代价', () => {
+  it('§18 多阶段：两阶段两次推进→扣成本入队；婉拒→永拒+代价', () => {
     const s = createInitialState(209, 'local');
-    s.pendingRecruits.push({ heroId: 'hero_returner', question: 'q' });
+    s.pendingRecruits.push({ heroId: 'hero_returner' });
+    s.heroChains['hero_returner'] = { stepIndex: 0, failCount: 0, offeredRound: 5, villageId: 'v_wuling' };
     const ctx = createTurnCtx(s, rngFake(0.5), 5);
-    settleRecruitChoices(s, [{ heroId: 'hero_returner', accepted: true }], ctx);
+    settleHeroSteps(s, [{ heroId: 'hero_returner', optionId: 0 }], ctx);
+    expect(s.heroChains['hero_returner'].stepIndex).toBe(1);
+    settleHeroSteps(s, [{ heroId: 'hero_returner', optionId: 0 }], ctx);
     expect(s.heroes.length).toBe(1);
     expect(s.county.fiscalFund).toBe(105);
-    // 拒绝流
+    // 婉拒流
     const s2 = createInitialState(210, 'local');
-    s2.pendingRecruits.push({ heroId: 'hero_returner', question: 'q' });
+    s2.pendingRecruits.push({ heroId: 'hero_returner' });
+    s2.heroChains['hero_returner'] = { stepIndex: 0, failCount: 0, offeredRound: 5, villageId: 'v_wuling' };
     const ctx2 = createTurnCtx(s2, rngFake(0.5), 5);
-    settleRecruitChoices(s2, [{ heroId: 'hero_returner', accepted: false }], ctx2);
+    settleHeroDeclines(s2, ['hero_returner'], ctx2);
     expect(s2.heroes.length).toBe(0);
     expect(s2.declinedRecruits).toContain('hero_returner');
     expect(ctx2.events.some((e) => e.type === 'recruitDeclined')).toBe(true);
@@ -144,7 +147,7 @@ describe('存档 v7 往返', () => {
     s.streaks.cutCorners = 1;
     s.eventHistory.push('cadreSlack');
     const back = deserialize(serialize(s));
-    expect(back.version).toBe(15);
+    expect(back.version).toBe(16);
     expect(back.techUnlocked).toContain('tech_grid');
     expect(back.eventHistory).toContain('cadreSlack');
     expect(back.streaks.cutCorners).toBe(1);

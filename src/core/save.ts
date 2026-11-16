@@ -17,9 +17,9 @@ import { chainMasterCatalog, INITIAL_INFRA } from '../config/economy';
 // v15（产业引擎）：新增村级飞地持仓快照，v14 存档自动迁移。
 // ============================================================
 
-const STORAGE_KEY = 'chuda.save.v15';
-const LEGACY_KEYS = ['chuda.save.v14', 'chuda.save.v13', 'chuda.save.v12', 'chuda.save.v11', 'chuda.save.v10', 'chuda.save.v9', 'chuda.save.v8', 'chuda.save.v7', 'chuda.save.v6', 'chuda.save.v5', 'chuda.save.v4', 'chuda.save.v3', 'chuda.save.v2', 'chuda.save.v1'];
-export const SAVE_VERSION = 15;
+const STORAGE_KEY = 'chuda.save.v16';
+const LEGACY_KEYS = ['chuda.save.v15', 'chuda.save.v14', 'chuda.save.v13', 'chuda.save.v12', 'chuda.save.v11', 'chuda.save.v10', 'chuda.save.v9', 'chuda.save.v8', 'chuda.save.v7', 'chuda.save.v6', 'chuda.save.v5', 'chuda.save.v4', 'chuda.save.v3', 'chuda.save.v2', 'chuda.save.v1'];
+export const SAVE_VERSION = 16;
 
 export function serialize(state: GameState): string {
   return JSON.stringify(state);
@@ -177,6 +177,14 @@ function migrateV14(data: GameState): void {
   }
 }
 
+/** v15 → v16：补招募链进度与村特质（§18） */
+function migrateV15(data: GameState): void {
+  if (typeof data.heroChains !== 'object' || data.heroChains === null) data.heroChains = {};
+  for (const v of data.villages) {
+    if (typeof v.trait !== 'string') v.trait = '';
+  }
+}
+
 export function deserialize(json: string): GameState {
   const data = JSON.parse(json) as GameState;
   if (data.version === 1) {
@@ -233,6 +241,10 @@ export function deserialize(json: string): GameState {
   }
   if (data.version === 14) {
     migrateV14(data);
+    data.version = 15;
+  }
+  if (data.version === 15) {
+    migrateV15(data);
     data.version = SAVE_VERSION;
   }
   if (data.version !== SAVE_VERSION) {

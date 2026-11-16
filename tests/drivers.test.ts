@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest';
 import { createInitialState } from '../src/core/state/initialState';
 import { playRound } from '../src/core/reducer';
 import { createTurnCtx } from '../src/core/systems/context';
-import { heroSum, resolveHeroAssign, settleRecruitChoices, heroIsSick } from '../src/core/systems/heroes';
+import { heroSum, resolveHeroAssign, settleHeroSteps, heroIsSick } from '../src/core/systems/heroes';
 import { settleTechUnlocks, techSum, canUnlockTech, settleImplicitTech } from '../src/core/systems/techTree';
 import { evaluateHeroRecruits, checkUnlockConditions, wonderRevealed } from '../src/core/systems/unlockEngine';
 import { wonderSum } from '../src/core/systems/wonders';
@@ -114,13 +114,17 @@ describe('第九节 · 人才招募（Hero 26 人，事件链触发）', () => {
     expect(s.pendingRecruits.length).toBeGreaterThan(0);
   });
 
-  it('接受：扣成本入队 + 事件入账；拒绝：永拒不再请', () => {
+  it('接受：扣成本入队 + 事件入账（§18 多阶段：两阶段链两次推进）', () => {
     const s = createInitialState(131, 'local');
-    s.pendingRecruits.push({ heroId: 'hero_returner', question: 'q' });
+    s.pendingRecruits.push({ heroId: 'hero_returner' });
+    s.heroChains['hero_returner'] = { stepIndex: 0, failCount: 0, offeredRound: 5, villageId: 'v_wuling' };
     const ctx = createTurnCtx(s, rngFake(0.5), 5);
-    settleRecruitChoices(s, [{ heroId: 'hero_returner', accepted: true }], ctx);
+    settleHeroSteps(s, [{ heroId: 'hero_returner', optionId: 0 }], ctx); // 第 1 步：免费进门
+    expect(s.heroChains['hero_returner'].stepIndex).toBe(1);
+    settleHeroSteps(s, [{ heroId: 'hero_returner', optionId: 0 }], ctx); // 第 2 步：15 万对赌
     expect(s.heroes.some((h) => h.heroId === 'hero_returner')).toBe(true);
     expect(s.county.fiscalFund).toBe(105); // 120−15
+    expect(ctx.events.some((e) => e.type === 'recruitAccepted')).toBe(true);
     // 再派去青石村：增益转移
     resolveHeroAssign(s, [{ heroId: 'hero_returner', villageId: 'v_qingshi' }], ctx);
     expect(heroSum(s, 'v_qingshi', 'agriYield')).toBe(0.2);
@@ -146,7 +150,7 @@ describe('第九节 · 存档 v7', () => {
       wonderInvest: [{ wonderId: 'w_agri', amount: 30 }],
     }).state;
     const back = deserialize(serialize(s));
-    expect(back.version).toBe(15);
+    expect(back.version).toBe(16);
     expect(back.techUnlocked).toContain('tech_grid');
     expect(back.wonders.find((w) => w.id === 'w_agri')!.invested).toBe(30);
     expect(back.heroes).toEqual([]);

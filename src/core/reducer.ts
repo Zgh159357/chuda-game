@@ -22,8 +22,10 @@ import { regenCadres, resolveCadreActions, settleCadres } from './systems/cadres
 import { drawEventFiles, resolveEventDecisions, expireEventFiles } from './systems/events';
 import { settleTechUnlocks, settleImplicitTech, techSum } from './systems/techTree';
 import { settleWonderInvest, settleWonderUpkeep } from './systems/wonders';
-import { resolveHeroAssign, settleRecruitChoices, heroSumAll, heroIsSick, flawSumAll } from './systems/heroes';
+import { resolveHeroAssign, settleHeroSteps, settleHeroDeclines, applyHeroDebuffs, heroSumAll, heroIsSick, flawSumAll } from './systems/heroes';
 import { evaluateHeroRecruits } from './systems/unlockEngine';
+import { chainOf } from '../config/heroChains';
+import { anchorVillageId } from '../logic/heroChain';
 import { settleFloorDefense, settleResilience } from './systems/resilience';
 import { settleVillageSynergies } from './systems/synergy';
 import { settleEconomy } from './systems/economy';
@@ -146,18 +148,23 @@ export function playRound(prev: GameState, actions: RoundActions, maxRounds: Rou
   // 6.53 §8 人才派驻（人才觉醒在摸排时发生）
   resolveHeroAssign(state, actions.heroAssign, ctx);
 
-  // 6.54 §9 人才两难抉择结算（接受/拒绝）
-  settleRecruitChoices(state, actions.recruitChoices, ctx);
+  // 6.54 §18 人才招募链：本回合推进的选项（成功前进/失败原地重试）
+  settleHeroSteps(state, actions.heroSteps, ctx);
+
+  // 6.545 §18 婉拒招募链
+  settleHeroDeclines(state, actions.heroDeclines, ctx);
 
   // 6.56 §9 隐式解锁：敷衍成性 → 「台账美化」自动解锁（无成本，代价自担）
   settleImplicitTech(state, ctx);
 
-  // 6.57 §9 人才觉醒：事件链触发两难招募（沈书记/老赵头等）
+  // 6.57 §18 人才入池：触发条件满足 → 写入 pendingRecruits + 链进度（锚点村记录在案）
   const offered = evaluateHeroRecruits(state);
-  for (const spec of offered) {
-    if (!spec.recruit) continue;
-    state.pendingRecruits.push({ heroId: spec.id, question: spec.recruit.question });
-    ctx.pushEvent({ type: 'recruitOffered', round, heroId: spec.id });
+  for (const heroId of offered) {
+    const chain = chainOf(heroId);
+    const anchor = chain ? anchorVillageId(state, chain) : null;
+    state.heroChains[heroId] = { stepIndex: 0, failCount: 0, offeredRound: round, villageId: anchor ?? undefined };
+    state.pendingRecruits.push({ heroId });
+    ctx.pushEvent({ type: 'recruitOffered', round, heroId });
     ctx.pushFeedback('mf_villager_card', 'recruit_offered_text');
   }
 
@@ -197,6 +204,9 @@ export function playRound(prev: GameState, actions: RoundActions, maxRounds: Rou
 
   // 10. 传导与状态更新
   settleTransmission(state, ctx);
+
+  // 10.05 §18 体制摩擦：入队人才的隐性代价每回合扣减
+  applyHeroDebuffs(state, ctx);
 
   // 10.1 §10 组织韧性结算（恢复 +5/回合；本回合有入户走访/摸排 +5）
   const hadVisit =

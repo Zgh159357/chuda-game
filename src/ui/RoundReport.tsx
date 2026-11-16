@@ -28,9 +28,10 @@ const EVENT_TAGS: Record<string, { text: string; cls: string }> = {
   techUnlock: { text: '机制解锁', cls: 'good' },
   wonderCompleted: { text: '超级工程', cls: 'good' },
   heroAwakened: { text: '人才觉醒', cls: 'good' },
-  recruitOffered: { text: '两难抉择', cls: '' },
+  recruitOffered: { text: '奇遇入池', cls: '' },
   recruitAccepted: { text: '人才入队', cls: 'good' },
   recruitDeclined: { text: '婉拒', cls: '' },
+  heroStepFail: { text: '招募受挫', cls: 'warn' },
   heroSick: { text: '人才病倒', cls: 'warn' },
   tabooAudit: { text: '暗访败露', cls: 'bad' },
   industryDisaster: { text: '天灾', cls: 'bad' },
@@ -119,7 +120,7 @@ function eventText(outcome: RoundOutcome, e: RoundOutcome['events'][number]): st
     }
     case 'recruitOffered': {
       const h = config.heroes.find((x) => x.id === e.heroId);
-      return `两难抉择摆上桌：${h?.name ?? e.heroId}（${h?.role ?? ''}）有意入局，等你拍板。`;
+      return `奇遇入池：${h?.name ?? e.heroId}（${h?.role ?? ''}）的线索传到了县里。`;
     }
     case 'recruitAccepted': {
       const h = config.heroes.find((x) => x.id === e.heroId);
@@ -128,6 +129,10 @@ function eventText(outcome: RoundOutcome, e: RoundOutcome['events'][number]): st
     case 'recruitDeclined': {
       const h = config.heroes.find((x) => x.id === e.heroId);
       return `婉拒了${h?.name ?? e.heroId}。有些门，关了就不容易再开。`;
+    }
+    case 'heroStepFail': {
+      const h = config.heroes.find((x) => x.id === e.heroId);
+      return `招募受挫：${h?.name ?? e.heroId}没接这茬，事情还得重谈。`;
     }
     case 'heroSick': {
       const h = config.heroes.find((x) => x.id === e.heroId);

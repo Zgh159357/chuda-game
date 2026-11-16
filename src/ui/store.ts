@@ -90,6 +90,8 @@ function defaultDraft(state: GameState | null): DraftState {
     techUnlocks: [],
     wonderInvest: [],
     heroAssign: [],
+    heroSteps: [], // §18 招募链本回合推进的选项
+    heroDeclines: [], // §18 招募链婉拒
     recruitChoices: [],
     mentorship: [],
     buildNodes: [], // §15 自建产业设施（村庄沙盘蓝图落子）
@@ -191,7 +193,8 @@ interface GameStore {
 
   openRecruit: (heroId: string) => void;
   closeRecruit: () => void;
-  answerRecruit: (heroId: string, accepted: boolean) => void; // 写入 draft.recruitChoices
+  chooseRecruitOption: (heroId: string, optionId: number) => void; // §18 写入 draft.heroSteps（同人才重选覆盖）
+  declineRecruit: (heroId: string) => void; // §18 婉拒（写 draft.heroDeclines 并关弹层）
 
   toggleMentorship: (villageId: string) => void;
   toggleBuildNode: (nodeId: string, villageId: string) => void; // 传帮带指令：勾选/取消本回合驻村村
@@ -508,11 +511,22 @@ export const useGame = create<GameStore>((set, get) => ({
 
   openRecruit: (heroId) => set({ openRecruitId: heroId }),
   closeRecruit: () => set({ openRecruitId: null }),
-  answerRecruit: (heroId, accepted) => {
+  chooseRecruitOption: (heroId, optionId) => {
     const { draft } = get();
-    const rest = draft.recruitChoices.filter((r) => r.heroId !== heroId);
+    const rest = draft.heroSteps.filter((r) => r.heroId !== heroId);
     set({
-      draft: { ...draft, recruitChoices: [...rest, { heroId, accepted }] },
+      draft: { ...draft, heroSteps: [...rest, { heroId, optionId }] },
+      openRecruitId: null,
+    });
+  },
+  declineRecruit: (heroId) => {
+    const { draft } = get();
+    set({
+      draft: {
+        ...draft,
+        heroDeclines: draft.heroDeclines.includes(heroId) ? draft.heroDeclines : [...draft.heroDeclines, heroId],
+        heroSteps: draft.heroSteps.filter((r) => r.heroId !== heroId),
+      },
       openRecruitId: null,
     });
   },
@@ -728,6 +742,8 @@ export const useGame = create<GameStore>((set, get) => ({
       techUnlocks: draft.techUnlocks,
       wonderInvest: draft.wonderInvest,
       heroAssign: draft.heroAssign,
+      heroSteps: draft.heroSteps,
+      heroDeclines: draft.heroDeclines,
       recruitChoices: draft.recruitChoices,
       mentorship: draft.mentorship,
       buildNodes: draft.buildNodes,

@@ -5,6 +5,8 @@
 // ============================================================
 import type { GameState, HeroFlawKind, HeroTalentKind } from '../types';
 import { config } from '../../config';
+import { chainOf } from '../../config/heroChains';
+import { optionAffordable, rollRecruitOption } from '../../logic/heroChain';
 import type { TurnCtx } from './context';
 
 /** 某村人才中某类增益值的总和（病倒中的人才不计；extraTalent 双绝活一并计入） */
@@ -70,37 +72,98 @@ export function heroIsSick(state: GameState, heroId: string): boolean {
 }
 
 /**
- * 人才两难抉择结算（reducer 6.54 步）：接受/拒绝。
- * 接受：扣 acceptCosts + 入队（heroes.push{heroId, villageId:'', recruitRound}）+ 事件 + 账。
- * 拒绝：declinePenalty 由调用方文本呈现，这里只记 declinedRecruits + 事件 + 账。
+ * §18 多阶段招募链结算（reducer 6.54 步）。
+ * 每步选 1 个选项：付不起成本→原地跳过；掷骰失败→failCount+1 原地重试；
+ * 成功→stepIndex+1；走完最后一步→正式入队 + passiveDebuff 挂账。
  */
-export function settleRecruitChoices(
+export function settleHeroSteps(
   state: GameState,
-  choices: { heroId: string; accepted: boolean }[] | undefined,
+  steps: { heroId: string; optionId: number }[] | undefined,
   ctx: TurnCtx,
 ): void {
-  for (const ch of choices ?? []) {
-    // 只在待抉择队列里的才有效
-    if (!state.pendingRecruits.some((p) => p.heroId === ch.heroId)) continue;
-    const spec = config.heroes.find((x) => x.id === ch.heroId);
-    if (!spec || !spec.recruit) continue;
-    const rec = spec.recruit;
-    if (ch.accepted) {
-      const costs = rec.acceptCosts ?? {};
-      state.county.fiscalFund -= costs.fiscal ?? 0;
-      if (costs.politicalCapital !== undefined) state.county.politicalCapital += costs.politicalCapital;
-      if (costs.trust !== undefined) state.county.trust = Math.max(0, Math.min(100, state.county.trust + costs.trust));
-      state.heroes.push({ heroId: spec.id, villageId: '', recruitRound: ctx.round });
-      ctx.pushEvent({ type: 'recruitAccepted', round: ctx.round, heroId: spec.id });
-      ctx.pushLedger('transition', `recruit_${spec.id}`, 8, `人才入队：${spec.role} ${spec.name}`);
-      ctx.addStars(12);
-    } else {
-      state.declinedRecruits.push(spec.id);
-      ctx.pushEvent({ type: 'recruitDeclined', round: ctx.round, heroId: spec.id });
-      ctx.pushLedger('cost', `recruit_decline_${spec.id}`, -4, `两难抉择拒绝：${spec.name}`);
+  for (const st of steps ?? []) {
+    if (!state.pendingRecruits.some((p) => p.heroId === st.heroId)) continue;
+    const chain = chainOf(st.heroId);
+    const spec = config.heroes.find((x) => x.id === st.heroId);
+    if (!chain || !spec) continue;
+    const prog = state.heroChains[st.heroId];
+    if (!prog) continue;
+    const step = chain.recruitSteps[prog.stepIndex];
+    const option = step?.options[st.optionId];
+    if (!step || !option) continue;
+
+    // 成本闸门：付不起就当作没操作（UI 已禁用，这里防御）
+    const afford = optionAffordable(state, st.heroId, option);
+    if (!afford.ok) continue;
+
+    // 付成本
+    const cost = option.cost ?? {};
+    if (cost.funds) state.county.fiscalFund -= cost.funds;
+    if (cost.politicalCapital) state.county.politicalCapital = Math.max(0, state.county.politicalCapital - cost.politicalCapital);
+    if (cost.trust) state.county.trust = Math.max(0, Math.min(100, state.county.trust - cost.trust));
+    if (cost.targetVillageGovernance) {
+      const v = state.villages.find((x) => x.id === prog.villageId);
+      if (v) v.internalGovernance = Math.max(0, Math.round((v.internalGovernance - cost.targetVillageGovernance) * 10) / 10);
     }
-    // 从待抉择队列移除（无论接受与否）
-    state.pendingRecruits = state.pendingRecruits.filter((p) => p.heroId !== ch.heroId);
+
+    if (rollRecruitOption(ctx.rng, option)) {
+      prog.stepIndex += 1;
+      if (prog.stepIndex >= chain.recruitSteps.length) {
+        // 走完全链 → 入队
+        state.heroes.push({ heroId: spec.id, villageId: prog.villageId ?? '', recruitRound: ctx.round });
+        state.pendingRecruits = state.pendingRecruits.filter((p) => p.heroId !== st.heroId);
+        ctx.pushEvent({ type: 'recruitAccepted', round: ctx.round, heroId: spec.id });
+        ctx.pushLedger('transition', `recruit_${spec.id}`, 8, `人才入队：${spec.role} ${spec.name}`);
+        ctx.addStars(12);
+        ctx.pushFeedback('mf_model_cadre', 'recruit_done_text');
+      }
+    } else {
+      prog.failCount += 1;
+      ctx.pushEvent({ type: 'heroStepFail', round: ctx.round, heroId: spec.id });
+      ctx.pushLedger('cost', `recruit_fail_${spec.id}`, -1, `招募受挫：${spec.name}`);
+    }
+  }
+}
+
+/** §18 婉拒：撤下待办，结算 declineCosts，declineCloses 则永不触发 */
+export function settleHeroDeclines(
+  state: GameState,
+  declines: string[] | undefined,
+  ctx: TurnCtx,
+): void {
+  for (const heroId of declines ?? []) {
+    if (!state.pendingRecruits.some((p) => p.heroId === heroId)) continue;
+    const chain = chainOf(heroId);
+    const spec = config.heroes.find((x) => x.id === heroId);
+    if (!chain || !spec) continue;
+    state.declinedRecruits.push(heroId);
+    if (chain.declineCosts) {
+      if (chain.declineCosts.fiscal) state.county.fiscalFund -= chain.declineCosts.fiscal;
+      if (chain.declineCosts.politicalCapital) state.county.politicalCapital = Math.max(0, state.county.politicalCapital - chain.declineCosts.politicalCapital);
+      if (chain.declineCosts.trust) state.county.trust = Math.max(0, Math.min(100, state.county.trust - chain.declineCosts.trust));
+    }
+    state.pendingRecruits = state.pendingRecruits.filter((p) => p.heroId !== heroId);
+    ctx.pushEvent({ type: 'recruitDeclined', round: ctx.round, heroId });
+    ctx.pushLedger('cost', `recruit_decline_${heroId}`, -4, `婉拒招募：${spec.name}`);
+  }
+}
+
+/** §18 体制摩擦：已入队人才的 passiveDebuff 每回合隐性扣减（transmission 段调用） */
+export function applyHeroDebuffs(state: GameState, ctx: TurnCtx): void {
+  const METRIC_MAX: Record<string, number> = { politicalCapital: 100, trust: 100, fiscalFund: Infinity };
+  for (const h of state.heroes) {
+    if (heroIsSick(state, h.heroId)) continue;
+    const chain = chainOf(h.heroId);
+    const debuff = chain?.passiveDebuff;
+    if (!debuff) continue;
+    const cap = METRIC_MAX[debuff.metric];
+    if (debuff.metric === 'politicalCapital') {
+      state.county.politicalCapital = Math.max(0, Math.min(cap ?? 100, Math.round((state.county.politicalCapital - debuff.value) * 10) / 10));
+    } else if (debuff.metric === 'trust') {
+      state.county.trust = Math.max(0, Math.min(100, Math.round((state.county.trust - debuff.value) * 10) / 10));
+    } else if (debuff.metric === 'fiscalFund') {
+      state.county.fiscalFund = Math.max(0, Math.round((state.county.fiscalFund - debuff.value) * 10) / 10);
+    }
   }
 }
 

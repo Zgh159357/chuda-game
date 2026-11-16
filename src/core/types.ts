@@ -367,12 +367,59 @@ export interface HeroSpec {
   flawKind?: HeroFlawKind;
   flawValue?: number;
   flawDesc?: string;
-  recruit?: HeroRecruitConfig; // 有=触发式招募；无=不再出现（旧随机觉醒废弃）
+  recruit?: HeroRecruitConfig; // §7-§17 旧式两难配置（§18 保留作链生成原料；运行时走 heroChains）
+  chain?: HeroRecruitChain; // §18：多阶段奇遇招募链（config/heroChains.ts 注入）
 }
 export interface HeroState {
   heroId: string;
   villageId: string; // 当前派驻村（'' = 未派驻）
   recruitRound?: number; // 入队回合（病倒周期用）
+}
+
+// ===== §18 多阶段奇遇与高门槛招募（替代一次性两难招募） =====
+/** 招募阶段内的一个行动选项：花钱/花政治资本/牺牲村治理，都有失败概率 */
+export interface RecruitOption {
+  label: string;
+  cost?: {
+    funds?: number;
+    politicalCapital?: number;
+    targetVillageGovernance?: number; // 从目标村内生治理里扣（说情要还人情）
+    trust?: number; // 全县信任代价（正数=扣减）
+  };
+  failChance: number; // 0-1 失败概率（村霸阻挠/对方不信任/时机不对）
+  successEffectDesc: string;
+  failEffectDesc: string;
+}
+/** 招募阶段：一段剧情文本 + 若干选项，选一个推进（成功→下一步，失败→留在本步） */
+export interface RecruitStep {
+  stepId: number; // 0 起
+  promptText: string;
+  options: RecruitOption[];
+}
+/** 人才多阶段招募链：条件触发 → 逐阶段推进 → 入队带体制摩擦 */
+export interface HeroRecruitChain {
+  heroId: string;
+  triggerConditions: {
+    minInfoAccuracy?: number; // 县域信息精度门槛
+    minTraffic?: number; // 交通设施：全县已通公路格数门槛
+    requiredVillageTrait?: string; // 必须有该特质的村（如 'hollow' 空心村 / 'clan' 宗族村）
+    requiredEventFlags?: string[]; // 必须先发生过的事件（eventHistory 核对）
+    minRound?: number; // 附加：回合门槛
+    minFatigue?: number; // 附加：全县平均疲劳门槛（如表格战神）
+    minVillageStall?: number; // 附加：某村内生治理停滞 N 回合（如沈书记）
+  };
+  recruitSteps: RecruitStep[];
+  passiveDebuff?: { metric: string; value: number; desc: string }; // 入队后的体制摩擦（每回合隐性扣减）
+  declinePenalty?: string; // 婉拒后的代价描述（写入事件）
+  declineCosts?: { fiscal?: number; politicalCapital?: number; trust?: number };
+  declineCloses?: boolean; // 婉拒后永不再次招募
+}
+/** 招募链进度：stepIndex=当前所在阶段（完成即入队），failCount=累计失败次数 */
+export interface HeroChainProgress {
+  stepIndex: number;
+  failCount: number;
+  offeredRound?: number; // 首次入池回合（用于展示「已搁置 N 回合」）
+  villageId?: string; // 触发锚点村（targetVillageGovernance 成本从该村扣）
 }
 
 // ===== §16 产业深度模拟（链主资本博弈 / 飞地腾挪 / 契约化分配 / 物理漏损） =====
@@ -451,7 +498,9 @@ export interface DraftState {
   techUnlocks: string[]; // 机制树：本回合解锁的节点 id（耗政治资本）
   wonderInvest: { wonderId: string; amount: number }[]; // 超级工程：本回合财政投入
   heroAssign: { heroId: string; villageId: string }[]; // 人才：本回合派驻调整
-  recruitChoices: { heroId: string; accepted: boolean }[]; // 人才两难：本回合抉择（v7 起）
+  heroSteps: { heroId: string; optionId: number }[]; // §18：本回合推进的招募链选项（optionId=选项序号）
+  heroDeclines: string[]; // §18：本回合婉拒的人才（入 declinedRecruits）
+  recruitChoices: { heroId: string; accepted: boolean }[]; // §7-§17 旧字段，§18 起由 heroSteps 替代（保留读兼容）
   mentorship: string[]; // §10：本回合指派「传帮带」的村 id
   buildNodes: { nodeId: string; villageId: string }[]; // §15：本回合自建产业设施
   chainInvites: string[]; // §16：本回合邀请落地的链主 id
@@ -552,6 +601,7 @@ export interface VillageState {
   governanceShield: number; // §11 治理护盾：按驻村干部数每回合生成，负面事件优先扣护盾
   synergyTitles: string[]; // §14 已解锁的融合配方 id（如 recipe_se_agri）；头衔=配方.unlockVillageTitle
   enclaveInvestments: EnclaveHolding[]; // §17 本村持有的飞地入股（拿分红、损内生）
+  trait: string; // §18 村特质：'' | 'hollow'（空心村）| 'clan'（宗族村），人才招募链条件用
 }
 
 // ===== 户群 =====
@@ -798,6 +848,7 @@ export type GameEvent =
   | RecruitOfferedEvent
   | RecruitAcceptedEvent
   | RecruitDeclinedEvent
+  | HeroStepFailEvent
   | HeroSickEvent
   | TabooAuditEvent
   | IndustryDisasterEvent
@@ -868,6 +919,11 @@ export interface RecruitAcceptedEvent {
 }
 export interface RecruitDeclinedEvent {
   type: 'recruitDeclined';
+  round: Round;
+  heroId: string;
+}
+export interface HeroStepFailEvent {
+  type: 'heroStepFail'; // §18：招募链某阶段失败（原地重试）
   round: Round;
   heroId: string;
 }
@@ -1026,7 +1082,9 @@ export interface RoundActions {
   techUnlocks?: string[]; // 机制树：本回合解锁节点
   wonderInvest?: { wonderId: string; amount: number }[]; // 超级工程：本回合财政投入
   heroAssign?: { heroId: string; villageId: string }[]; // 人才派驻调整
-  recruitChoices?: { heroId: string; accepted: boolean }[]; // 人才两难抉择（v7 起）
+  heroSteps?: { heroId: string; optionId: number }[]; // §18：本回合推进的招募链选项
+  heroDeclines?: string[]; // §18：本回合婉拒的人才
+  recruitChoices?: { heroId: string; accepted: boolean }[]; // 人才两难抉择（v7 起，§18 兼容读）
   mentorship?: string[]; // §10：本回合指派「传帮带」的村 id
   buildNodes?: { nodeId: string; villageId: string }[]; // §15：本回合自建产业设施
   chainInvites?: string[]; // §16：本回合邀请落地的链主 id
@@ -1105,8 +1163,9 @@ export interface GameState {
     rank: number; // 连续考核夺魁回合数
     villageStall: Record<string, number>; // 各村内生治理停滞回合数
   };
-  pendingRecruits: { heroId: string; question: string }[]; // 待抉择的人才两难（v7 起）
-  declinedRecruits: string[]; // 已拒绝的人才（declineCloses 后不再触发）
+  pendingRecruits: { heroId: string; question?: string }[]; // 待推进的招募链人才（v7 起，§18 question 由链派生）
+  declinedRecruits: string[]; // 已婉拒的人才（declineCloses 后不再触发）
+  heroChains: Record<string, HeroChainProgress>; // §18：各人才招募链进度（stepIndex/failCount）
   builtNodes: BuiltNode[]; // §15 玩家自建产业设施（沙盘自由组合）
   chainMasters: ChainMaster[]; // §16 链主企业（落地/撤资状态）
   enclaves: EnclaveInvestment[]; // §16 飞地抱团入股（跨村资本）

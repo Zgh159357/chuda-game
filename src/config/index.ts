@@ -41,3 +41,4 @@ export * from './eventFiles';
 export * from './nodeActions';
 export * from './text';
 export * from './world';
+export * from './heroChains';

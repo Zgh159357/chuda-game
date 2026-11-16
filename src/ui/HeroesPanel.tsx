@@ -1,11 +1,13 @@
 // ============================================================
-// 人才档案面板（主控提示词第九节）：
-// 不再是随机觉醒——事件链触发两难抉择，招募入队。
+// 人才档案面板（§18）：
+// 多阶段奇遇招募——事件链触发 → 逐阶段对谈 → 入队带体制摩擦。
 // 神级绝活 + 致命毒点，一并写进档案。
 // 红线：人才是村里本来就有的能人，不是天降救星。
 // ============================================================
 import React from 'react';
 import { config } from '../config';
+import { chainOf } from '../config/heroChains';
+import { currentStepOf } from '../logic/heroChain';
 import { useGame } from './store';
 import { heroIsSick } from '../core/systems/heroes';
 
@@ -27,13 +29,17 @@ export function HeroesPanel() {
       <div className="paper-body">
         {state.pendingRecruits.length > 0 && (
           <div className="recruit-pending">
-            <h4>案头待批复的请托信</h4>
+            <h4>案头待推进的奇遇</h4>
             {state.pendingRecruits.map((p) => {
               const spec = config.heroes.find((x) => x.id === p.heroId);
               if (!spec) return null;
+              const chain = chainOf(p.heroId);
+              const step = currentStepOf(state, p.heroId);
+              const prog = state.heroChains[p.heroId];
               return (
                 <button key={p.heroId} className="recruit-pending-item" onClick={() => openRecruit(p.heroId)}>
-                  {spec.role} {spec.name} —— 当面拍板
+                  {spec.role} {spec.name} —— {step ? `第 ${step.stepId + 1}/${chain?.recruitSteps.length ?? '?'} 步 · 当面谈` : '当面拍板'}
+                  {prog && prog.failCount > 0 ? `（已受挫 ${prog.failCount} 次）` : ''}
                 </button>
               );
             })}
