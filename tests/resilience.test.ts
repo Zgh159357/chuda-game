@@ -141,7 +141,7 @@ describe('§10 组织韧性系统', () => {
     const out = playRound(s0, idleActions());
     const round2 = out.state;
     const restored = deserialize(serialize(round2));
-    expect(restored.version).toBe(17);
+    expect(restored.version).toBe(18);
     expect(restored.county.organizationalResilience).toBe(round2.county.organizationalResilience);
     expect(restored.county.maxResilience).toBe(round2.county.maxResilience);
     expect(restored.villages.every((v) => typeof v.industryOutputMul === 'number')).toBe(true);

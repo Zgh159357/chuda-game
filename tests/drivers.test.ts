@@ -150,7 +150,7 @@ describe('第九节 · 存档 v7', () => {
       wonderInvest: [{ wonderId: 'w_agri', amount: 30 }],
     }).state;
     const back = deserialize(serialize(s));
-    expect(back.version).toBe(17);
+    expect(back.version).toBe(18);
     expect(back.techUnlocked).toContain('tech_grid');
     expect(back.wonders.find((w) => w.id === 'w_agri')!.invested).toBe(30);
     expect(back.heroes).toEqual([]);

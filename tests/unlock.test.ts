@@ -147,7 +147,7 @@ describe('存档 v7 往返', () => {
     s.streaks.cutCorners = 1;
     s.eventHistory.push('cadreSlack');
     const back = deserialize(serialize(s));
-    expect(back.version).toBe(17);
+    expect(back.version).toBe(18);
     expect(back.techUnlocked).toContain('tech_grid');
     expect(back.eventHistory).toContain('cadreSlack');
     expect(back.streaks.cutCorners).toBe(1);

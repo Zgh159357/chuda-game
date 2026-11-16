@@ -206,7 +206,7 @@ describe('§16 存档 v14 往返', () => {
       nodeActions: ['coldchain_expand'],
     }).state;
     const back = deserialize(serialize(out));
-    expect(back.version).toBe(17);
+    expect(back.version).toBe(18);
     expect(back.chainMasters.find((m) => m.id === 'chain_veg')!.isPresent).toBe(true);
     expect(back.enclaves).toHaveLength(1);
     expect(back.villages.find((v) => v.id === 'v_wuling')!.enclaveInvestments).toHaveLength(1);

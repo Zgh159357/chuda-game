@@ -1,8 +1,10 @@
 import type { GameState, PlayerAnchor, Round } from '../types';
+import type { IndustryState } from '../../types/game';
 import { config } from '../../config';
 import { makeCadres, makeProjects, makeRelationships, makeSites, makeUnits, makeVillages } from '../../config/world';
 import { chainMasterCatalog, INITIAL_INFRA } from '../../config/economy';
 import { buildPopulation } from '../../logic/population';
+import { buildIndustryState } from '../sandbox/industryGrid';
 
 // ============================================================
 // 初始状态工厂（P1：玩家身份锚点三选一）
@@ -33,8 +35,8 @@ export function createInitialState(seed: number, anchor: PlayerAnchor): GameStat
     v.participation = Math.max(0, Math.min(100, v.participation + eff.participation));
   }
 
-  return {
-    version: 17,
+  const state: GameState = {
+    version: 18,
     seed,
     status: 'running',
     anchor,
@@ -126,5 +128,15 @@ export function createInitialState(seed: number, anchor: PlayerAnchor): GameStat
     distributionContracts: {}, // §16 各村分红契约（缺省=口头约定）
     physicalInfra: { ...INITIAL_INFRA }, // §16 冷链与数字化错位
     villagePopulations: Object.fromEntries(villages.map((v) => [v.id, buildPopulation(v)])), // §19 人口快照
+    industryGrid: emptyIndustryGrid(), // §20 产业网格快照（下方用真实 state 重建）
   };
+
+  // §20 产业网格：需要完整 state（projects/villages/physicalInfra）才能派生
+  state.industryGrid = buildIndustryState(state);
+  return state;
+}
+
+/** 空网格占位（createInitialState 内先占位后重建） */
+function emptyIndustryGrid(): IndustryState {
+  return { tiles: [], connectedEdges: [], totalMaintenanceCost: 0, totalDebtInterest: 0 };
 }

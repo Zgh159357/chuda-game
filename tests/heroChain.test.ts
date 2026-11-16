@@ -131,7 +131,7 @@ describe('§18 存档 v16', () => {
     s.heroChains['hero_shen'] = { stepIndex: 1, failCount: 2, offeredRound: 7, villageId: 'v_yunxi' };
     s.declinedRecruits.push('hero_zhao');
     const back = deserialize(serialize(s));
-    expect(back.version).toBe(17);
+    expect(back.version).toBe(18);
     expect(back.heroChains['hero_shen'].failCount).toBe(2);
     expect(back.declinedRecruits).toContain('hero_zhao');
     expect(back.villages.find((v) => v.id === 'v_wuling')!.trait).toBe('hollow');

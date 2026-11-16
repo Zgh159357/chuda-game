@@ -3,6 +3,7 @@ import { config } from '../config';
 import { makeCadres } from '../config/world';
 import { chainMasterCatalog, INITIAL_INFRA } from '../config/economy';
 import { buildPopulation } from '../logic/population';
+import { buildIndustryState } from './sandbox/industryGrid';
 
 // ============================================================
 // 存档：序列化 / 反序列化 / localStorage 持久化
@@ -18,9 +19,9 @@ import { buildPopulation } from '../logic/population';
 // v15（产业引擎）：新增村级飞地持仓快照，v14 存档自动迁移。
 // ============================================================
 
-const STORAGE_KEY = 'chuda.save.v17';
-const LEGACY_KEYS = ['chuda.save.v16', 'chuda.save.v15', 'chuda.save.v14', 'chuda.save.v13', 'chuda.save.v12', 'chuda.save.v11', 'chuda.save.v10', 'chuda.save.v9', 'chuda.save.v8', 'chuda.save.v7', 'chuda.save.v6', 'chuda.save.v5', 'chuda.save.v4', 'chuda.save.v3', 'chuda.save.v2', 'chuda.save.v1'];
-export const SAVE_VERSION = 17;
+const STORAGE_KEY = 'chuda.save.v18';
+const LEGACY_KEYS = ['chuda.save.v17', 'chuda.save.v16', 'chuda.save.v15', 'chuda.save.v14', 'chuda.save.v13', 'chuda.save.v12', 'chuda.save.v11', 'chuda.save.v10', 'chuda.save.v9', 'chuda.save.v8', 'chuda.save.v7', 'chuda.save.v6', 'chuda.save.v5', 'chuda.save.v4', 'chuda.save.v3', 'chuda.save.v2', 'chuda.save.v1'];
+export const SAVE_VERSION = 18;
 
 export function serialize(state: GameState): string {
   return JSON.stringify(state);
@@ -198,6 +199,17 @@ function migrateV16(data: GameState): void {
   }
 }
 
+/** §20：产业网格快照缺失 → 由现有状态重建 */
+function migrateV17(data: GameState): void {
+  if (
+    typeof data.industryGrid !== 'object' ||
+    data.industryGrid === null ||
+    !Array.isArray(data.industryGrid.tiles)
+  ) {
+    data.industryGrid = buildIndustryState(data);
+  }
+}
+
 export function deserialize(json: string): GameState {
   const data = JSON.parse(json) as GameState;
   if (data.version === 1) {
@@ -262,6 +274,10 @@ export function deserialize(json: string): GameState {
   }
   if (data.version === 16) {
     migrateV16(data);
+    data.version = 17;
+  }
+  if (data.version === 17) {
+    migrateV17(data);
     data.version = SAVE_VERSION;
   }
   if (data.version !== SAVE_VERSION) {

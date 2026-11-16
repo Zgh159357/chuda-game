@@ -3,6 +3,7 @@
 // 纯类型定义，禁止 import 任何实现。
 // ============================================================
 import type { VillagePopulation } from '../types/population';
+import type { IndustryState } from '../types/game';
 
 // ===== 时间与阶段 =====
 export type Round = number; // 1..50
@@ -1186,6 +1187,7 @@ export interface GameState {
   distributionContracts: Record<string, DistributionContract>; // §16 各村分红契约
   physicalInfra: PhysicalInfrastructure; // §16 冷链与数字化错位
   villagePopulations: Record<string, VillagePopulation>; // §19 各村人口快照（群体块+流动率）
+  industryGrid: IndustryState; // §20 产业网格沙盒总快照（tiles/边/维护费/利息）
 }
 
 export interface RoundRecord {

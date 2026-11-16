@@ -146,8 +146,8 @@ describe('人口系统（§19）', () => {
   it('存档 v17 往返：人口快照保留', () => {
     const s = fresh();
     const back = deserialize(serialize(s));
-    expect(back.version).toBe(17);
-    expect(SAVE_VERSION).toBe(17);
+    expect(back.version).toBe(18);
+    expect(SAVE_VERSION).toBe(18);
     expect(back.villagePopulations['v_yunxi'].totalPop).toBe(s.villagePopulations['v_yunxi'].totalPop);
   });
 });

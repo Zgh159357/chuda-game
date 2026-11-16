@@ -7,6 +7,7 @@ import { evaluateCheckpoints } from './systems/checkpoints';
 import { resolveActions } from './systems/actions';
 import { settleVillagerAgency } from './systems/villagerAgency';
 import { settlePopulation } from './systems/population';
+import { buildIndustryState } from './sandbox/industryGrid';
 import { settleSignals } from './systems/signals';
 import { settleInfoFog } from './systems/infoFog';
 import { settleTargeting } from './systems/targeting';
@@ -265,6 +266,9 @@ export function playRound(prev: GameState, actions: RoundActions, maxRounds: Rou
 
   // 13.5 §9 因果律记账：事件历史 + 干净/敷衍连击（解锁条件的长期记忆）
   settleCausality(state, ctx, prevFraudCount);
+
+  // 13.6 §20 产业网格快照重建（纯派生：路网/设施/基建变化后重算）
+  state.industryGrid = buildIndustryState(state);
 
   // 14. 历史快照（先归档，再推进回合号）
   // ⚠ 快照必须先剔除 history 再克隆：history 里每条记录自带快照，

@@ -90,7 +90,7 @@ describe('§14 涌现式融合（第二批）', () => {
     const v = state.villages.find((x) => x.id === 'v_qingshi')!;
     v.synergyTitles.push('recipe_pv_agri');
     const back = deserialize(serialize(state));
-    expect(back.version).toBe(17);
+    expect(back.version).toBe(18);
     const bv = back.villages.find((x) => x.id === 'v_qingshi')!;
     expect(bv.synergyTitles).toContain('recipe_pv_agri');
   });
@@ -192,7 +192,7 @@ describe('§15 创造性增强（进化链/商机/人才联动/反面配方/自�
     const state = seeded();
     state.builtNodes.push({ id: 'n_pv_v_qingshi', nodeId: 'node_pv', villageId: 'v_qingshi', builtRound: 4 });
     const back = deserialize(serialize(state));
-    expect(back.version).toBe(17);
+    expect(back.version).toBe(18);
     expect(back.builtNodes.some((b) => b.id === 'n_pv_v_qingshi')).toBe(true);
   });
 
