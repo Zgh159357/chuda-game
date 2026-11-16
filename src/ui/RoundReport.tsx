@@ -43,6 +43,8 @@ const EVENT_TAGS: Record<string, { text: string; cls: string }> = {
   chainWithdraw: { text: '链主撤资', cls: 'bad' },
   enclaveDividend: { text: '飞地分红', cls: '' },
   infraWaste: { text: '物理漏损', cls: 'warn' },
+  laborShortage: { text: '劳动力缺口', cls: 'warn' },
+  skillUp: { text: '技能升级', cls: 'good' },
 };
 
 function eventText(outcome: RoundOutcome, e: RoundOutcome['events'][number]): string {
@@ -89,6 +91,10 @@ function eventText(outcome: RoundOutcome, e: RoundOutcome['events'][number]): st
       return `信息迷雾揭开：${outcome.state.villages.find((v) => v.id === e.villageId)?.name ?? e.villageId} 的真实情况浮出水面。`;
     case 'fraudCaught':
       return config.text[e.textId] ?? e.textId;
+    case 'laborShortage':
+      return `劳动力缺口：${outcome.state.villages.find((v) => v.id === e.villageId)?.name ?? e.villageId}${config.text.labor_shortage_text}`;
+    case 'skillUp':
+      return `技能升级：${outcome.state.villages.find((v) => v.id === e.villageId)?.name ?? e.villageId} ${e.count} 人${config.text.skill_up_text}`;
     case 'cohesionRiot':
       return `安置点炸锅：${config.text[e.textId] ?? e.textId}`;
     case 'cohesionCrisis':

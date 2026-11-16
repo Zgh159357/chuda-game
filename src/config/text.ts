@@ -42,6 +42,8 @@ export const text: Record<string, string> = {
   infra_waste_text: '冷库嗡嗡响着，里面空了大半。钱花出去了，货没进来。',
   coldchain_expand_text: '冷链站又挂了两节库。能存住的东西，才卖得上价。',
   smart_app_text: '智慧农业 APP 上线了。接下来就看有没有人真的点开它。',
+  labor_shortage_text: '厂子起了，工人却招不满。年轻人都在外面，留下的干不动三班倒。',
+  skill_up_text: '夜校的灯又亮起来了。一批人领了结业证，工钱能多谈几块。',
   tech_unlock_text: '新的治理机制落了章，全县的工作方式都跟着变。',
   wonder_done_text: '工程落成了。地图上多了一处谁都能看见的东西。',
   hero_awaken_text: '走访时发现了一个能人。他本来就在村里，只是之前没人张罗。',

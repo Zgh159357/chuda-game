@@ -7,7 +7,10 @@ import type { CoopType, GameState, IndustryTag, MeasureId, PovertyTag } from '..
 import { config } from '../config';
 import { synergyRecipes, industryNodes } from '../config/industry';
 import { chainMasterCatalog, DEFAULT_CONTRACT, CONTRACT_LABELS } from '../config/economy';
+import { populationSummary } from '../core/systems/population';
 import { useGame } from './store';
+
+const SKILL_NAMES: Record<string, string> = { unskilled: '普工', skilled: '技工', expert: '能手' };
 
 const TAG_NAMES_BUILT: Record<IndustryTag, string> = {
   primary_agri: '一产',
@@ -331,6 +334,37 @@ export function VillageSandbox({ villageId }: { villageId: string }) {
                   />
                   <span>（进村集体账）</span>
                 </label>
+              </>
+            );
+          })()}
+        </div>
+
+        {/* §19 人口与劳动力（供需决定项目有没有人干） */}
+        <div className="sandbox-block">
+          <h4>人口与劳动力 · 供需</h4>
+          {(() => {
+            const pop = state.villagePopulations[villageId];
+            const sum = populationSummary(state, villageId);
+            if (!pop) return <p className="note">人口底册缺失。</p>;
+            return (
+              <>
+                <p style={{ fontSize: 14, marginBottom: 4 }}>
+                  总人口 {Math.round(pop.totalPop)} · 流出 {Math.round(pop.outflowRate)}% · 回流 {Math.round(pop.inflowRate)}%
+                </p>
+                <p style={{ fontSize: 14, marginBottom: 4 }}>
+                  劳力供给 {Math.round(sum.supply)}（折合） / 需求 {Math.round(sum.demand)}
+                  {sum.demand > 0 && sum.factor < 1 && (
+                    <span style={{ color: 'var(--seal)' }}>　缺人手：项目产出 ×{sum.factor.toFixed(2)}</span>
+                  )}
+                </p>
+                <div style={{ fontSize: 13, color: 'rgba(58,46,36,0.7)' }}>
+                  {pop.groups.map((g) => (
+                    <span key={g.id} style={{ marginRight: 8 }}>
+                      {SKILL_NAMES[g.skillLevel]}
+                      {g.jobTag === 'troublemaker' ? '刺头' : ''} {g.count}人
+                    </span>
+                  ))}
+                </div>
               </>
             );
           })()}

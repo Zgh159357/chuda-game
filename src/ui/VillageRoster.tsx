@@ -43,6 +43,10 @@ export function VillageRoster({ state, surveyVillages, onToggleSurvey, villageId
   }
   const villages = villageId ? state.villages.filter((v) => v.id === villageId) : state.villages;
 
+  const popOf = (v: VillageState) => Math.round(state.villagePopulations[v.id]?.totalPop ?? 0);
+  const outflowOf = (v: VillageState) => Math.round(state.villagePopulations[v.id]?.outflowRate ?? 0);
+  const inflowOf = (v: VillageState) => Math.round(state.villagePopulations[v.id]?.inflowRate ?? 0);
+
   return (
     <section className="paper">
       <div className="paper-title">
@@ -75,6 +79,9 @@ export function VillageRoster({ state, surveyVillages, onToggleSurvey, villageId
                 <span>接得住：{valueOrMask(v, v.canHoldIndex)}</span>
                 <span title="按驻村干部数每回合生成；项目烂尾、灾情先扣护盾">
                   治理护盾：{Math.round(v.governanceShield)}
+                </span>
+                <span title="劳动人口按技能折算，缺口影响项目产出">
+                  人口：{popOf(v)} · 流出 {outflowOf(v)}% · 回流 {inflowOf(v)}%
                 </span>
               </div>
               <div style={{ marginTop: 6, fontSize: 14 }}>

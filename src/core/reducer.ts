@@ -6,6 +6,7 @@ import { createTurnCtx } from './systems/context';
 import { evaluateCheckpoints } from './systems/checkpoints';
 import { resolveActions } from './systems/actions';
 import { settleVillagerAgency } from './systems/villagerAgency';
+import { settlePopulation } from './systems/population';
 import { settleSignals } from './systems/signals';
 import { settleInfoFog } from './systems/infoFog';
 import { settleTargeting } from './systems/targeting';
@@ -184,6 +185,9 @@ export function playRound(prev: GameState, actions: RoundActions, maxRounds: Rou
 
   // 7. 村民自主事件（P2）
   settleVillagerAgency(state, ctx);
+
+  // 7.5 §19 人口系统：技能演化 / 流动率 / 劳动力缺口
+  settlePopulation(state, ctx, actions.cards ?? []);
 
   // 8. 模糊信号（P5）
   settleSignals(state, ctx);

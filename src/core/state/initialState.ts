@@ -2,6 +2,7 @@ import type { GameState, PlayerAnchor, Round } from '../types';
 import { config } from '../../config';
 import { makeCadres, makeProjects, makeRelationships, makeSites, makeUnits, makeVillages } from '../../config/world';
 import { chainMasterCatalog, INITIAL_INFRA } from '../../config/economy';
+import { buildPopulation } from '../../logic/population';
 
 // ============================================================
 // 初始状态工厂（P1：玩家身份锚点三选一）
@@ -33,7 +34,7 @@ export function createInitialState(seed: number, anchor: PlayerAnchor): GameStat
   }
 
   return {
-    version: 16,
+    version: 17,
     seed,
     status: 'running',
     anchor,
@@ -124,5 +125,6 @@ export function createInitialState(seed: number, anchor: PlayerAnchor): GameStat
     enclaves: [], // §16 飞地抱团
     distributionContracts: {}, // §16 各村分红契约（缺省=口头约定）
     physicalInfra: { ...INITIAL_INFRA }, // §16 冷链与数字化错位
+    villagePopulations: Object.fromEntries(villages.map((v) => [v.id, buildPopulation(v)])), // §19 人口快照
   };
 }

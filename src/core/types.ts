@@ -2,6 +2,7 @@
 // 《触达》核心类型 —— 全部机制的数据基础
 // 纯类型定义，禁止 import 任何实现。
 // ============================================================
+import type { VillagePopulation } from '../types/population';
 
 // ===== 时间与阶段 =====
 export type Round = number; // 1..50
@@ -859,7 +860,9 @@ export type GameEvent =
   | SynergyUnlockedEvent
   | ChainWithdrawEvent
   | EnclaveDividendEvent
-  | InfraWasteEvent;
+  | InfraWasteEvent
+  | LaborShortageEvent
+  | SkillUpEvent;
 
 export interface CohesionRiotEvent {
   type: 'cohesionRiot';
@@ -987,6 +990,17 @@ export interface InfraWasteEvent {
   type: 'infraWaste'; // §16 物理漏损：冷库空转 / APP 没人用
   round: Round;
   textId: string;
+}
+export interface LaborShortageEvent {
+  type: 'laborShortage'; // §19 劳动力缺口：有产业没人干
+  round: Round;
+  villageId: string;
+}
+export interface SkillUpEvent {
+  type: 'skillUp'; // §19 技能演化：一批村民技能升级
+  round: Round;
+  villageId: string;
+  count: number;
 }
 
 // ===== 大考 / 失败 / 结局 =====
@@ -1171,6 +1185,7 @@ export interface GameState {
   enclaves: EnclaveInvestment[]; // §16 飞地抱团入股（跨村资本）
   distributionContracts: Record<string, DistributionContract>; // §16 各村分红契约
   physicalInfra: PhysicalInfrastructure; // §16 冷链与数字化错位
+  villagePopulations: Record<string, VillagePopulation>; // §19 各村人口快照（群体块+流动率）
 }
 
 export interface RoundRecord {
@@ -1419,4 +1434,19 @@ export interface BalanceConfig {
     premiumTrustPer10: number; // 溢价分成每 10% 带来的信任
     serviceFeeCollectivePerPoint: number; // 服务费每 1 点带来的集体经济
   };
+  population: {
+    // §19 人口与技能演化
+    skillTrainChance: number; // 培训投入下 unskilled→skilled 的每回合转化率
+    techUpChance: number; // 农技专家（techGuide）带动的 skilled→expert 转化率
+    outflowBase: number; // 流失率基础（产业差/风险高的村更高）
+    inflowBase: number; // 回流率基础（有产业/参与度高则更高）
+    laborPerProject: number; // 每个在建项目折合的劳动力需求（人）
+    shortageMul: number; // 劳动力缺口时的项目效果下限系数
+    hollowOutflow: number; // 判定「空心村」的流失率阈值
+  };
 }
+
+// ============================================================
+// §19 人口系统类型（见 src/types/population.ts 真源）
+// ============================================================
+export * from '../types/population';

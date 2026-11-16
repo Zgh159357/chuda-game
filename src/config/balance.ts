@@ -84,4 +84,14 @@ export const balance: BalanceConfig = {
     premiumTrustPer10: 0.5, // 溢价分成每 10% 信任 +0.5
     serviceFeeCollectivePerPoint: 0.2, // 服务费每 1 点集体经济 +0.2
   },
+  population: {
+    // §19 人口与技能演化
+    skillTrainChance: 0.12, // 培训投入下 unskilled→skilled 每回合转化率
+    techUpChance: 0.06, // 农技专家带动 skilled→expert 转化率
+    outflowBase: 2, // 流失率基础
+    inflowBase: 1, // 回流率基础
+    laborPerProject: 15, // 每项目折合劳动力需求（人）
+    shortageMul: 0.6, // 劳动力缺口项目效果下限
+    hollowOutflow: 30, // 空心村判定流失率阈值
+  },
 };
